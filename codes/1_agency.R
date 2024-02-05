@@ -2,11 +2,12 @@
 # There are 9 questions about gain and three about loss respectively
 # Then we can calculate the gain (0-3), loss (0-3) 
 # The loss aversion is the add up of gain bias and loss bias
+######## select the agency data
 dat_agency <- dat %>%
   select(ResponseId, agency_pub_trans_avail:agency_remote_realistic)
 # there is one id R_3CKphd7v4L4nZVw who did not finish the questions,
 # count the NA in each columns
-#na_count <- dat_agency %>% summarise_all(~sum(is.na(.)))
+
 na_count <- sapply(dat_agency, function(x) sum(is.na(x)))
 # Convert the counts to a data frame for plotting
 na_count_df <- data.frame(column = names(na_count)[2:19], na_count = na_count[2:19])
@@ -16,22 +17,14 @@ ggplot(na_count_df, aes(x = column, y = na_count)) +
   geom_bar(stat = "identity") +
   theme_minimal() +
   labs(x = "Column", y = "Number of NAs", title = "NA Count in Each Column")
-
-######## select the agency data
-dat_agency <- dat %>%
- select(ResponseId, Q8.2_1:Q8.10_2)
-
-dat_agency <- dat %>%
-  select(ResponseId, Q8.2_1:Q8.8_2)
-
 ########combine Q8.9 and Q8.10
 library(dplyr)
 
 # Assuming df is your dataframe, and A and B are your column names
 summary <- dat_agency %>%
   mutate(Category = case_when(
-    !is.na(Q8.9_1) & Q8.9_1 != "" & !is.na(Q8.10_1) & Q8.10_1 != "" ~ "Answers in both",
-    (is.na(Q8.9_1) | Q8.9_1 == "") & (is.na(Q8.10_1) | Q8.10_1 == "") ~ "No answers",
+    !is.na(agency_IP_safe_avail) & agency_IP_safe_avail != "" & !is.na(agency_remote_avail) & agency_remote_avail != "" ~ "Answers in both",
+    (is.na(agency_IP_safe_avail) | agency_IP_safe_avail == "") & (is.na(Q8.10_1) | Q8.10_1 == "") ~ "No answers",
     TRUE ~ "Answer in one only"
   )) %>%
   count(Category)
@@ -39,10 +32,12 @@ summary <- dat_agency %>%
 # Print the summary
 print(summary)
 
-dat_agency <- dat_agency %>% 
-  mutate(Q8.9and10_1 = ifelse(!is.na(Q8.9_1) & Q8.9_1 != "", Q8.9_1, Q8.10_1))
+#dat_agency <- dat_agency %>% 
+ # mutate(Q8.9and10_1 = ifelse(!is.na(Q8.9_1) & Q8.9_1 != "", Q8.9_1, Q8.10_1))
 
 # we need to delete it from the whole sample 
+dat_agency <- dat %>%
+  select(ResponseId, agency_pub_trans_avail:agency_online_realistic)
 dat_agency <- na.omit(dat_agency)
 ####### Scoring the answers ######
 # Duplicate the dataframe
@@ -99,11 +94,9 @@ qplot(c(1:14), var_explained) +
   ylim(0, 1)
 ##############confirmation analysis######
 ## Model Specification
-# Define the base variables
-base_vars <- paste0("Q8.", 2:8)
-
 # Generate the formula parts for each variable
-formula_parts <- sapply(base_vars, function(x) paste0(x, "_1 + ", x, "_2"), simplify = FALSE)
+selected_colnames <- colnames(dat_agency_scores)[2:15]
+formula_parts <- paste(selected_colnames, collapse = " + ")
 
 # Combine all parts into one model formula string for CFA
 model_formula <- paste("F =~", paste(unlist(formula_parts), collapse = " + "))
@@ -122,10 +115,10 @@ fitMeasures(my.cfa, c("chisq", "df", "pvalue",
 
 ########some two dimensional plots#####
 # Define the function
-plot_scatter <- function(base_name,width = 8, height = 6) {
+plot_scatter <- function(base_name, width = 8, height = 6) {
   # Construct the column names
-  col1 <- paste0(base_name, "_1")
-  col2 <- paste0(base_name, "_2")
+  col1 <- paste0(base_name, "_avail")
+  col2 <- paste0(base_name, "_realistic")
   
   # Calculate the count for each (x, y) pair
   point_counts <- dat_agency_scores %>%
@@ -144,12 +137,13 @@ plot_scatter <- function(base_name,width = 8, height = 6) {
          title = paste("Scatter Plot of combinations for", base_name))
 }
 
-plot_scatter("Q8.8")
+plot_scatter("agency_online")
 ######## add up available realistic #####
 mutate_sums <- function(df) {
   # Generate column names
-  cols_1 <- paste0("Q8.", 2:8, "_1")
-  cols_2 <- paste0("Q8.", 2:8, "_2")
+
+  cols_1 <- paste0("agency_", c("pub_trans","uber","delivery","grocery","pharma","docs","online"), "_avail")
+  cols_2 <- paste0("agency_", c("pub_trans","uber","delivery","grocery","pharma","docs","online"), "_realistic")
   
   # Check if the columns exist in the dataframe
   existing_cols_1 <- cols_1[cols_1 %in% names(df)]
