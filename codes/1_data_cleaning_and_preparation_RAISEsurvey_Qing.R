@@ -1,43 +1,51 @@
-# This series of scripts will reproduce the analysis of the "The globalizability of temporal discounting". This document is preregistered at OSF.
-## This script will clean and prepare the datasets for model estimation
-
 ########################
 # 0. Utility functions
 ########################
-
-## The following functions are necessary to handle data wrangling as well as to compute the different scores.
+# Set the working directory to the folder that this file is in:
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 if (!require("tidyverse")) install.packages("tidyverse")
 if (!require("scales")) install.packages("scales")
 
-source("999_1_auxiliary_functions.R")
-
+source("999_1_auxiliary_functions.R") #this is a reduced file with only the required functions
 options(digits = 3)
 options(scipen = 99)
-
 
 ########################
 # 1. Data cleaning
 ########################
-## In this section we upload the pilot dataset.
-### We include a identification number for each case, compute age, apply the attention check and estimate spending allocation in relative (%) terms.
-### We also select a main ethnic background for each individual (to be changed for allowing mixed ethnic background if used in analyses in the future).
-### We also allocate delay-speedup questions next to each other for future computations.
-### We further clean variables not explored in these analyses but of potential interest for researchers (e.g., time_vs_money).
-dat_org <- read_csv(
-    file = file.choose()
-)
-dat_org <- dat_org[-c(1, 2), ] ### the first two second rows are not needed
-dat_org$`Duration (in seconds)` <- as.numeric(dat_org$`Duration (in seconds)`)
-dat_org$Progress <- as.numeric(dat_org$Progress)
+dat <- read_csv("RAISE_base_survey_Jan_2024.csv") #load in the data
+dat <- dat[-c(1,2), -c(1:3, 9:12, 94:101) ] #remove the first two rows and several unneeded columns
 
+#initial data quality checks
+dat <- dat %>%
+  mutate(Age = 2023 - as.numeric(Q10.7),
+         duration = as.numeric(`Duration (in seconds)`),
+         Progress = as.numeric(Progress)) %>%
+  #basics: consent, passed the attention check, and completed most of the questions, remove if not
+  filter(Q1.1 == "CONSENT" & Q4.1 == "PASS" & Progress >= 90) %>%#down to N = 1443
+  #advanced: minimum and maximum response times and age less than 100
+    filter(duration < ((median(duration) - mad(duration)) * 3), #max duration, down to N = 1066
+    duration > 120, #min duration, N = 1063
+    (is.na(Age) | Age < 100)) %>% #age must be plausible, N = 1062
+    distinct(ResponseId, .keep_all = TRUE) %>% #make sure we have no duplicates, N = 1062
+  select(
+    -UserLanguage, #user language
+    -DistributionChannel, #channels for distribution
+    -Q1.1, # Consent
+    -Q4.1, # Attention_check,
+    -duration,#duration
+    -`Duration (in seconds)`, #duration
+    -Progress,
+    -Finished,
+    -RecordedDate,
+    -Q10.7
+    )  
 
-### Qing ####d
-# do not need Q31-----Q34
-#########
-dat <- dat_org %>%
-    # Data cleaning and recoding of categories for main variables.
+# Data cleaning and recoding of categories for main variables.
+dat <- dat %>%
     rename(
+        #TD vars
         Gain550 = "Q2.1",
         Gain600 = "Q2.2",
         Gain750 = "Q2.3",
@@ -53,103 +61,113 @@ dat <- dat_org %>%
         Gain7500 = "Q5.3",
         Gain5100 = "Q5.4",
         Gain5050 = "Q5.5",
-        duration = "Duration (in seconds)",
-        # disc_debt = "Discretionary spend_2",
-        # disc_non_fin = "Discretionary spend_3",
-        # disc_savings = "Discretionary spend_4",
-        # disc_invest = "Discretionary spend_5",
+        
+        #loss aversion vars
+        loss_gain_1 = "Q6.1",
+        loss_gain_2 = "Q6.3",
+        loss_gain_3 = "Q6.5",
+        loss_loss_1 = "Q6.2",
+        loss_loss_2 = "Q6.4",
+        loss_loss_3 = "Q6.6",
+        
+        #anomalies vars
+        #Q7.1 - present bias, see below, (500$ in 12months versus indifference point in 24months)
+        #Q7.2 - risk preference, see below
+        alloc_debt = "Q7.3_2",
+        alloc_spend = "Q7.3_3",
+        alloc_save = "Q7.3_4",
+        alloc_invest = "Q7.3_5",
+        
+        #agency vars
+        work_situation = "Q8.1",
+        agency_pub_trans_avail = "Q8.2_1",
+        agency_pub_trans_realistic = "Q8.2_2",
+        agency_uber_avail = "Q8.3_1",
+        agency_uber_realistic = "Q8.3_2",
+        agency_delivery_avail = "Q8.4_1",
+        agency_delivery_realistic = "Q8.4_2",
+        agency_grocery_avail = "Q8.5_1",
+        agency_grocery_realistic = "Q8.5_2",
+        agency_pharma_avail = "Q8.6_1",
+        agency_pharma_realistic = "Q8.6_2",
+        agency_docs_avail = "Q8.7_1",
+        agency_docs_realistic = "Q8.7_2",
+        agency_online_avail = "Q8.8_1",
+        agency_online_realistic = "Q8.8_2",
+        agency_IP_safe_avail = "Q8.9_1",
+        agency_IP_safe_realistic = "Q8.9_2",
+        agency_remote_avail = "Q8.10_1",
+        agency_remote_realistic = "Q8.10_2",
+        
+        no_crowds = "Q8.11",
+        covid = "Q8.12",
+        covid_isolate_reality = "Q8.13",
+        covid_isolate_imagine = "Q8.14",
+        covid_no_isolate = "Q8.15",
+        covid_no_isolate_text = "Q8.15_6_TEXT",
+        
+        #2020 behaviors vars
+        mask_march2020 = "Q9.1_1",
+        mask_spring2020 = "Q9.1_2",
+        mask_summer2020 = "Q9.1_3",
+        mask_fall2020 = "Q9.1_4",
+        mask_winter2020 = "Q9.1_5",
+        
+        indoor_march2020 = "Q9.2_1",
+        indoor_spring2020 = "Q9.2_2",
+        indoor_summer2020 = "Q9.2_3",
+        indoor_fall2020 = "Q9.2_4",
+        indoor_winter2020 = "Q9.2_5",
+        
+        #finance and demographics vars
         expectation = "Q10.1",
-        bills = "Q10.3", ### Qing ######not sure#########
-        # income = "Q26_1",
-        # debt = "Q26_2",
-        # assets = "Q26_3",
+        internet_access = "Q10.2",
+        bills_2020 = "Q10.3",
+        bills_current = "Q10.4",
         financial_2020 = "Q10.5",
         situation_debt = "Q10.6",
-        # child_situation = "Q29",
         Gender = "Q10.8",
         EducationCompleted = "Q10.9",
         Employment = "Q10.10",
-        Ethnic = "Q10.11"
+        Ethnic = "Q10.11",
+        Ethnic_text = "Q10.11_10_TEXT",
+        zipcode = "Q1.2",
+        work_zipcode = "Q10.12"
     ) %>%
-    ### Qing #####
-    # I deleted all parts about countries and text cleaning
-    #########
     mutate(Gender = fct_recode(Gender,
         "Female" = "Woman",
         "Male" = "Man",
         "Other" = "Prefer not to answer",
         "Other" = "I prefer to use:"
     )) %>%
-    select_all(funs(gsub(" ", "_", .))) %>%
-    select_all(funs(gsub("-", "_", .))) %>%
-    mutate(duration = as.numeric(duration)) %>%
-    # mutate(Progress = as.numeric(Progress)) %>%
-    mutate(Age = 2023 - as.numeric(Q10.7)) %>%
+    select_all(list(~gsub(" ", "_", .))) %>%
+    select_all(list(~gsub("-", "_", .))) %>%
     mutate(Risk_preference = case_when(
         str_detect(Q7.2, "A 25% chance of") ~ 4,
         str_detect(Q7.2, "A 50% chance of") ~ 3,
         str_detect(Q7.2, "A 67% chance of") ~ 2,
         str_detect(Q7.2, "A 75% chance of") ~ 1,
-        str_detect(Q7.2, "Guarante") ~ 0
-    ))
-### Qing #####
-# Cound not find  Interval_markup, Time_vs_Money; thus deleted the related codes.
-#########
-### We add the initial data quality checks. Those include pass the attention check, minimum and maximum response times and minimum progress of 90%
-dat <- dat %>%
-    filter(
-        str_detect(Q4.1, "PASS"),
-        str_detect(Status, "IP"),
-        str_detect(Finished, "TRUE"),
-        duration > (median(duration) - mad(duration) * 3),
-        duration > 120,
-        Progress > 90,
-    ) %>%
-    #### Qing#####
-    # Q4.1 is the Attention_check
-    #############
-    ### We remove implausible responses for age and income
-    #   mutate (income = replace(income, which(income <0), NA),
-    #           debt = replace(debt, which(debt <0), NA),
-    #           assets = replace(assets, which(assets <0), NA)) %>%
+        str_detect(Q7.2, "Guarantee") ~ 0
+    )) %>%
+    select( - Q7.2) %>%
+    rename(Common_difference = "Q7.1") %>% #aka pres_bias
+    relocate(Common_difference, .after = Gain5050)
+    
+#manually check on the gender_other text column
+x <- subset(dat, Q10.8_4_TEXT != "NA") #two pp, neither meaningful entries
+dat <- dat %>% select(-Q10.8_4_TEXT) #remove the column as we won't look into it
+rm(x)
 
-    filter(is.na(Age) | Age < 100) %>%
-    #   filter(is.na(Other_gender)|
-    #            str_detect(replace_na(Other_gender,""), "gender")|
-    #            str_detect(replace_na(Other_gender,""), "Gender")|
-    #            str_detect(replace_na(Other_gender,""), "NB")|
-    #            str_detect(replace_na(Other_gender,""), "No ")|
-    #            str_detect(replace_na(Other_gender,""), "No")|
-    #            str_detect(replace_na(Other_gender,""), "no ")|
-    #            str_detect(replace_na(Other_gender,""), "non")|
-    #            str_detect(replace_na(Other_gender,""), "rans")) %>%
+########################
+# 1.2 Decision data
+########################
+#focus on the key decision biases and related responses
 
-    ### We clean the dataset to keep only the most relevant columns and in the desired order.
-    distinct(ResponseId, .keep_all = TRUE) %>%
-    #   relocate(Delay_speedup_2, .after = Delay_speedup_1) %>%
-    ##### Qing #####
-    # Data cleaning and recoding of categories for main variables.  I do not have delay speedup 1-2, just have 7.1
-    #############
-    rename(Common_difference = "Q7.1") %>%
-    relocate(Common_difference, .after = Gain5050) %>% ### no additivity and speedup measurement directly
-    select(
-        -StartDate, -EndDate, -Status, -Finished, -RecordedDate,
-        -RecipientLastName, -RecipientFirstName, -RecipientEmail,
-        -ExternalReference,
-        -DistributionChannel,
-        -Q1.1, # Consent
-        -Q4.1, # Attention_check,
-        -duration,
-        -starts_with("Q10.11"), # starts_with("Q34") ethics,
-        -starts_with("Q10.8") # starts_with("Q31") gender
-    )
-##### Qing########
-# Countries related parts are deleted
-#################
+data_small <- dat[,-c(29:75)] #TEMP
 
 dat_item <-
-    dat %>%
-    arrange(ResponseId) %>% # not have response id originally, i assign to it
+    data_small %>% #TEMP
+    arrange(ResponseId) %>% 
     mutate(amount_later16 = case_when(
         Gain550 == "Receiving $550 in 12 months" & Gain510 == "Receiving $500 right now" ~ 550,
         Gain600 == "Receiving $600 in 12 months" ~ 600,
@@ -164,27 +182,6 @@ dat_item <-
         Gain510 == "Receiving $510 in 12 months" & Gain505 == "Receiving $500 right now" ~ 520,
         Gain505 == "Receiving $505 in 12 months" ~ 510
     )) %>%
-    # mutate(amount_later18 = case_when(
-    #     amount_later16 == 505 ~ 505,
-    #     amount_later16 == 510 ~ 510,
-    #     amount_later16 == 550 ~ 550,
-    #     amount_later16 == 600 ~ 600,
-    #     amount_later16 == 750 ~ 750
-    # )) %>%
-    # mutate(amount_later19 = case_when(
-    #     amount_later16 == 505 ~ 505,
-    #     amount_later16 == 510 ~ 510,
-    #     amount_later16 == 550 ~ 550,
-    #     amount_later16 == 600 ~ 600,
-    #     amount_later16 == 750 ~ 750
-    # )) %>%
-    #### Qing########
-    # I do not have delay speedup 1-2, then amount_later18-19 are not necessary
-    # I do not have subadditivity, then amount_later17 is not necessary
-    # No Subadditivity, Delay-speedup 1 and Delay-speedup 2,
-    # the lengths of delay_sooner(later/sooner) have 15+1 instead of 15+4
-    # common difference is assigned to be 12
-    #############
     pivot_longer(Gain550:Common_difference, names_to = c("question")) %>%
     mutate(
         delay_sooner = rep(c(rep(0, 15), 12), length(unique(ResponseId))),
@@ -206,10 +203,7 @@ dat_item <-
         question == "Gain7500" ~ 7500,
         question == "Gain5100" ~ 5100,
         question == "Gain5050" ~ 5050,
-        question == "Common_difference" ~ amount_later16,
-        # question == "Subadditivity" ~ amount_later17,
-        # question == "Delay_speedup_2" ~ amount_later18,
-        # question == "Delay_speedup_2" ~ amount_later19
+        question == "Common_difference" ~ amount_later16 #aka present bias 
     )) %>%
     mutate(question = paste("Q", rep(1:ncol(select(dat, Gain550:"Common_difference")), nrow(dat)), sep = "")) %>%
     mutate(question_num = as.numeric(gsub("Q", "", question))) %>%
@@ -217,10 +211,7 @@ dat_item <-
         question_num < 6 ~ "block1",
         question_num >= 6 & question_num < 11 ~ "block2",
         question_num >= 11 & question_num < 16 ~ "block3",
-        question_num == 16 ~ "anom1",
-        # question_num == 17 ~ "anom2",
-        # question_num == 18 ~ "anom3",
-        # question_num == 19 ~ "anom3",
+        question_num == 16 ~ "anom1"
     )) %>%
     mutate(choice = case_when(
         is.na(value) ~ NA_real_,
@@ -238,44 +229,27 @@ dat_item <-
     drop_na(choice) %>%
     mutate_if(is.character, as.factor)
 
-
 ###############################
 # 2. Computing anomalies/scores
 ###############################
+## We estimate the anomalies rates for the anomalies (present bias = presbias; absolute magnitude = absolmag, gain-loss asymmetry = gainloss).
+## We use answers to the three baseline sets of questions plus the answers to the common difference to compute the temporal discount scores.
 
-## We estimate the anomalies rates for the five anomalies (present bias = presbias; absolute magnitude = absolmag, gain-loss asymmetry = gainloss; delay-speedup = delayspeed; subadditivity = subaddit).
-## We use answers to the three baseline sets of questions plus the answers to the common difference, subadditivity, and delay-speedup items to compute the temporal discount scores.
-
-## Computing the rates of the five anomalies
+## Computing the rates of the anomalies #CHECK THESE ARE CORRECT where does the 6, 16, 11, etc come from in relation to our data 
 presbias <- as.numeric(get_latest_answer(dat_item, 6)$choice != get_second_choices(dat_item, "Q16"))
 absolmag <- as.numeric(get_latest_answer(dat_item, 6)$choice != as.numeric(get_latest_answer(dat_item, 16)$choice))
 gainloss <- as.numeric(get_latest_answer(dat_item, 6)$choice == as.numeric(get_latest_answer(dat_item, 11)$choice))
-##### Qing########
-# no Q17 - Q19 in questions
-#############
-# delayspeed <- as.numeric(get_latest_answer(dat_item, 6)$choice != get_second_choices(dat_item, "Q19"))
-# subaddit_all <- data.frame(
-#     sub1 = as.numeric(get_latest_answer(dat_item, 6)$choice +
-#         get_second_choices(dat_item, "Q16")),
-#     sub2 = get_second_choices(dat_item, "Q17")
-# )
-
-# subaddit <- mutate(subaddit_all, sub = case_when(
-#     sub1 == 0 & sub2 == 1 ~ 1,
-#     sub1 == 2 & sub2 == 0 ~ 1,
-#     TRUE ~ 0
-# ))$sub
 
 anomalies_data <- list()
 ## We apply the function fixer_anom to estimate whether the anomalies are observed and whether those are consistent with the theory or not.
 ## Given a first and a second set of responses, plus an ID identifier, it will classify the pattern of responses in anomaly/not anomaly and in the first case, whether it is consistent or not.
 ## In the second case (not anomaly), it will also inform whether the first decision was a sooner or a later choice.
-##### Qing########
-# my Q16 is Q5.5
-#############
+
+
+##### Qing: my Q16 is Q7.1
 anomalies_data[[1]] <- fixer_anom(data.frame(
     fc = get_latest_answer(dat_item, 6)$choice,
-    sc = get_second_choices(dat_item, "Q16"),
+    sc = get_second_choices(dat_item, "Q16"), #presbias / cmmon difference
     ResponseId = unique(dat_item$ResponseId)
 ), type = "presbias")
 
@@ -291,9 +265,7 @@ anomalies_data[[3]] <- fixer_anom(data.frame(
     ResponseId = unique(dat_item$ResponseId)
 ), type = "gainloss")
 
-##### Qing#####
-# the type gainloss is called response instead of response.x.x
-##############
+##### Qing# the type gainloss is called response instead of response.x.x
 anomalies_congruent <- anomalies_data %>%
     ### We are only interested in individual responses
     reduce(left_join, by = "ResponseId") %>%
@@ -318,7 +290,6 @@ scores <- get_scores(get_latest_answer(dat_item, 6))$score +
     get_scores(get_latest_answer(dat_item, 16))$score +
     1 - get_second_choices(dat_item, "Q16")
 
-
 q <- dat_item %>%
     count(ResponseId) %>%
     arrange()
@@ -331,16 +302,6 @@ dat_item <- dat_item %>%
         absolmag = rep(anomalies_congruent$absolmag, q$n),
         gainloss = rep(anomalies_congruent$gainloss, q$n),
     )
-
-### We correct the scores for the Estonian sample (see Supplementary Data for details)
-### Qing########
-# no Estonian sample
-#############
-# est_scores <- rescale(dat_item[dat_item$Code == "EST", ]$score, to = c(0, 19),
-#                       from = range(0,17, na.rm = TRUE))
-# dat_item[dat_item$Code == "EST", ]$score <- est_scores
-# dat_item[dat_item$Code == "EST", ]$presbias <- NA
-# dat_item[dat_item$Code == "EST", ]$subaddit <- NA
 
 ## We remove unnecessary columns and variables
 dat_unique <- dat_item %>%
