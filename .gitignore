@@ -279,7 +279,7 @@ TSWLatexianTemp*
 
 # large data files
 *.mat
-*.csv
+# *.csv
 *.xlsx
 *.npy
 *.npy.gz
