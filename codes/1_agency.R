@@ -3,7 +3,7 @@
 # Then we can calculate the gain (0-3), loss (0-3) 
 # The loss aversion is the add up of gain bias and loss bias
 dat_agency <- dat %>%
-  select(ResponseId, Q8.2_1:Q8.10_2)
+  select(ResponseId, agency_pub_trans_avail:agency_remote_realistic)
 # there is one id R_3CKphd7v4L4nZVw who did not finish the questions,
 # count the NA in each columns
 #na_count <- dat_agency %>% summarise_all(~sum(is.na(.)))
