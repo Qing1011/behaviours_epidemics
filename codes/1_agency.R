@@ -24,7 +24,7 @@ library(dplyr)
 summary <- dat_agency %>%
   mutate(Category = case_when(
     !is.na(agency_IP_safe_avail) & agency_IP_safe_avail != "" & !is.na(agency_remote_avail) & agency_remote_avail != "" ~ "Answers in both",
-    (is.na(agency_IP_safe_avail) | agency_IP_safe_avail == "") & (is.na(Q8.10_1) | Q8.10_1 == "") ~ "No answers",
+    (is.na(agency_IP_safe_avail) | agency_IP_safe_avail == "") & (is.na(agency_remote_avail) | agency_remote_avail == "") ~ "No answers",
     TRUE ~ "Answer in one only"
   )) %>%
   count(Category)
@@ -63,8 +63,7 @@ dat_agency_scores[2:15] <- data.frame(lapply(dat_agency_scores[2:15],
                                              function(x) {as.numeric(x)} ))
 ##########PCA###########################
 # to standarise the data in order to evaluate 
-#standardized_data <- scale(dat_agency_scores[, 2:15])
-res_pca <- prcomp(standardized_data, scale. = TRUE)
+res_pca <- prcomp(dat_agency_scores[, 2:15], scale. = TRUE)
 
 # Calculate eigenvalues from the PCA result
 eigenvalues <- res_pca$sdev^2
@@ -79,8 +78,41 @@ plot(pc_numbers, eigenvalues, type = "b", pch = 19, xlab = "Principal Component"
 # Optional: Add a line to mark the 'elbow'
 abline(h = 1, col = "red", lty = 2)
 
-#library(factoextra)
-#fviz_eig(res_pca)
+## factor analysis 
+library(factoextra)
+library(psych)
+standardized_data <- scale(dat_agency_scores[, 2:15],center = TRUE, scale = TRUE)
+fa_result <- fa(standardized_data)
+#fviz_eig(fa_result)
+eigenvalues <- fa_result$values 
+######################
+##### write myself #####
+######################
+# Standardize the data
+standardized_data <- scale(dat_agency_scores[, 2:15],center = TRUE, scale = TRUE)
+# Compute the covariance (correlation) matrix
+cov_matrix <- cor(data)(standardized_data)
+# Perform eigen decomposition
+eigen_decomp <- eigen(cov_matrix)
+nfactors <- length(eigen_decomp$values)
+  # Extract the factor loadings for the specified number of factors
+loadings <- eigen_decomp$vectors[, 1:nfactors]
+  # Extract the variance explained by the specified number of factors
+eigenvalues <- eigen_decomp$values[1:nfactors]
+######################
+######################
+plot(eigenvalues, type = "b", pch = 19, xlab = "Factor", ylab = "Eigenvalue",
+      main = "Scree Plot")
+abline(h = 1, col = "red", lty = 2) 
+
+eigen_df <- data.frame(Factor = 1:length(eigenvalues), Eigenvalue = eigenvalues)
+
+# Plot using ggplot2
+ggplot(eigen_df, aes(x = Factor, y = Eigenvalue)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
+  labs(title = "Scree Plot", x = "Factor", y = "Eigenvalue")
 
 library(ggplot2)
 #calculate total variance explained by each principal component
