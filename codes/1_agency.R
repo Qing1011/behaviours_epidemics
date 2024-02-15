@@ -131,9 +131,8 @@ selected_colnames <- colnames(dat_agency_scores)[2:15]
 formula_parts <- paste(selected_colnames, collapse = " + ")
 
 # Combine all parts into one model formula string for CFA
-model_formula <- 'F =~ agency_pub_trans_avail + agency_pub_trans_realistic + agency_uber_avail + agency_uber_realistic + agency_delivery_avail + agency_delivery_realistic + agency_grocery_avail + agency_grocery_realistic + agency_pharma_avail + agency_pharma_realistic + agency_docs_avail + agency_docs_realistic + agency_online_avail + agency_online_realistic 
-                  F ~~ 1*F
-                  agency_pub_trans_avail ~ 1'
+model_formula <- 'F =~ agency_pub_trans_avail + agency_pub_trans_realistic + 
+agency_uber_avail + agency_uber_realistic + agency_delivery_avail + agency_delivery_realistic + agency_grocery_avail + agency_grocery_realistic + agency_pharma_avail + agency_pharma_realistic + agency_docs_avail + agency_docs_realistic + agency_online_avail + agency_online_realistic'
 
 # Display the generated model formula
 cat(model_formula)
@@ -144,8 +143,7 @@ my.cfa <- cfa(model_formula, data = standardized_data, std.lv = T)
 
 ### Model fit
 fitMeasures(my.cfa, c("chisq", "df", "pvalue", 
-                      "rmsea", "srmr", "gfi", "cfi", "tli")) %>% 
-  as.data.frame() %>% t() %>% as.data.frame() %>% round(3)
+                      "rmsea", "srmr", "gfi", "cfi", "tli")) 
 
 #### try two factors ####
 m4b <- 'f1 =~ agency_pub_trans_avail +  agency_uber_avail + agency_delivery_avail + agency_grocery_avail + agency_pharma_avail + agency_docs_avail + agency_online_avail
