@@ -131,19 +131,34 @@ selected_colnames <- colnames(dat_agency_scores)[2:15]
 formula_parts <- paste(selected_colnames, collapse = " + ")
 
 # Combine all parts into one model formula string for CFA
-model_formula <- paste("F =~", paste(unlist(formula_parts), collapse = " + "))
+model_formula <- 'F =~ agency_pub_trans_avail + agency_pub_trans_realistic + agency_uber_avail + agency_uber_realistic + agency_delivery_avail + agency_delivery_realistic + agency_grocery_avail + agency_grocery_realistic + agency_pharma_avail + agency_pharma_realistic + agency_docs_avail + agency_docs_realistic + agency_online_avail + agency_online_realistic 
+                  F ~~ 1*F
+                  agency_pub_trans_avail ~ 1'
 
 # Display the generated model formula
 cat(model_formula)
 
 ## Running Analysis
 library(lavaan)
-my.cfa <- cfa(model_formula, data = dat_agency_scores[2:15], std.lv = T)
+my.cfa <- cfa(model_formula, data = standardized_data, std.lv = T)
 
 ### Model fit
 fitMeasures(my.cfa, c("chisq", "df", "pvalue", 
                       "rmsea", "srmr", "gfi", "cfi", "tli")) %>% 
   as.data.frame() %>% t() %>% as.data.frame() %>% round(3)
+
+#### try two factors ####
+m4b <- 'f1 =~ agency_pub_trans_avail +  agency_uber_avail + agency_delivery_avail + agency_grocery_avail + agency_pharma_avail + agency_docs_avail + agency_online_avail
+        f2 =~ agency_pub_trans_realistic + agency_uber_realistic + + agency_delivery_realistic + agency_grocery_realistic + agency_pharma_realistic + agency_docs_realistic + agency_online_realistic
+        f3 =~ 1*f1 + 1*f2
+        f3 ~~ f3' 
+twofac7items_b <- cfa(m4b, data=dat_agency_scores[2:15],std.lv=TRUE)
+summary(twofac7items_b,fit.measures=TRUE,standardized=TRUE)
+
+fitMeasures(twofac7items_b, c("chisq", "df", "pvalue", 
+                      "rmsea", "srmr", "gfi", "cfi", "tli")) %>% 
+  as.data.frame() %>% t() %>% as.data.frame() %>% round(3)
+
 
 ########some two dimensional plots#####
 # Define the function
