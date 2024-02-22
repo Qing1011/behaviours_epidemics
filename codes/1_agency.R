@@ -1,7 +1,4 @@
 ### Calculate the agency ###
-# There are 9 questions about gain and three about loss respectively
-# Then we can calculate the gain (0-3), loss (0-3) 
-# The loss aversion is the add up of gain bias and loss bias
 ######## select the agency data
 dat_agency <- dat %>%
   select(ResponseId, agency_pub_trans_avail:agency_remote_realistic)
