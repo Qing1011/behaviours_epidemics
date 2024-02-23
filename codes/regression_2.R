@@ -31,7 +31,7 @@ gam_linear_model <- gam(y ~ s(score_p) + s(gain_bias_p) + s(loss_bias_p) + s(res
                         data = visits_scores_wk)
 summary(gam_linear_model)
 
-gam_model <- gam(visits_weekly ~ s(score_p) + s(gain_bias_p) + s(loss_bias_p) + s(rescale_avail_p) + s(rescale_realistic_p) + s(logcumucaserate) + s(logcase) + s(logtest),
+gam_model <- gam(visits_weekly ~ s(score_p) + te(gain_bias_p, loss_bias_p) + s(rescale_avail_p) + s(rescale_realistic_p) + s(logcumucaserate) + s(logcase) + s(logtest),
                  data = visits_scores_wk,family = poisson(link = "log"))
 
 
