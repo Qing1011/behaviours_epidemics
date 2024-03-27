@@ -5,18 +5,18 @@ library(tidycensus)
 library(tidyverse)
 library(data.table)
 
-census_api_key("919b37e63df029d1420900f893770f49d4a03226",install = TRUE)
-v20 <- load_variables(2020, "acs5", cache = TRUE)
+census_api_key("919b37e63df029d1420900f893770f49d4a03226") #,install = TRUE
+v19 <- load_variables(2019, "acs5", cache = TRUE)
 View(v20)
-write_csv(v20,'variable_names.csv')
+write_csv(v19,'variable_namesv19.csv')
 
 # population: B25026_001, Estimate!!Total population in occupied housing units:
-population <- get_acs(geography = 'tract', state = '36',
+population <- get_acs(geography = 'tract', state = '36', survey = "acs5",
                       variables = c(population = "B25026_001"), 
                       year = 2020)
 
-population <- population[,c('GEOID','estimate')]
-setnames(population, c('estimate'), c('Population'))
+#population <- population[,c('GEOID','estimate')]
+#setnames(population, c('estimate'), c('Population'))
 
 
 ### there are other people not in the occupied housing units
@@ -94,7 +94,7 @@ for (race in c('B25014B_003', "B25014C_003","B25014D_003","B25014E_003", "B25014
 setnames(person_per_room2, c('estimate'), c('person_per_room2'))
 
 ###############*******################
-#black: B02001_003, Estimate!!Total:!!Black or African American alone
+#B01001B_001 Estimate!!Total: SEX BY AGE (BLACK OR AFRICAN AMERICAN ALONE)
 black <- get_acs(geography = "tract", state = '36',
                  variables = c(black = "B02001_003"), 
                  
@@ -103,10 +103,10 @@ black <- black[,c('GEOID','estimate')]
 setnames(black, c('estimate'), c('Black'))
 
 ###############*******################
-#Hispanic
-# B03001_003, Estimate!!Total:!!Hispanic or Latino:
+#Hispanic B01001I_001
+# B03001_003, Estimate!!Total:!!SEX BY AGE (HISPANIC OR LATINO)
 hispanic <- get_acs(geography = "tract", state = '36',
-                    variables = c(hispanic = "B03001_003"), 
+                    variables = c(hispanic = "B01001I_001"), 
                     
                     year = 2020)
 
