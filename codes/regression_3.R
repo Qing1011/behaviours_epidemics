@@ -2,6 +2,7 @@ if (!requireNamespace("mgcv", quietly = TRUE)) install.packages("mgcv")
 if (!requireNamespace("reshape2", quietly = TRUE)) install.packages("reshape2")
 if (!requireNamespace("openxlsx", quietly = TRUE)) install.packages("openxlsx")
 if (!requireNamespace("magick", quietly = TRUE)) install.packages("magick")
+if (!requireNamespace("dlnm", quietly = TRUE)) install.packages("dlnm")
 
 library(openxlsx)
 library(mgcv)
@@ -9,16 +10,27 @@ library(stats)
 library(ggplot2)
 library(reshape2)
 library(magick)
+library(dlnm)
 ###
 #{0: 'Glocery&Pharmacies', 1: 'Retails', 2: 'Arts&Entertainment', 3: 'Restaurants&Bars',
  # 4: 'Educations', 5: 'Healthcares', 6: 'others'}
 ##
 
 visits_scores_wk <- read.csv(file.choose())
-visits_scores_wk$agency <- visits_scores_wk$rescale_avail + visits_scores_wk$rescale_avail
 ### only use the fourth week of march
 # Define the columns you want to divide
 # The column to divide by
+names_to_exclude <- c(10003,10004,10007,10009)
+
+# Selecting subset where name is not in the list
+visits_scores_wk <- visits_scores_wk[!visits_scores_wk$zip_char %in% names_to_exclude, ]
+
+columns_to_divide <- c('Glocery.Pharmacies_visits_weekly', 'Retails_visits_weekly', 
+                       'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
+                       'Educations_visits_weekly', 'Healthcares_visits_weekly',
+                       'others_visits_weekly',"BACHELOR_S","BLACK","HISPANIC","AREA")
+
+
 divisor_column <- "POPULATION"
 
 # Loop through each column to divide
@@ -28,14 +40,35 @@ for (col in columns_to_divide) {
   visits_scores_wk[[new_col_name]] <- visits_scores_wk[[col]] / visits_scores_wk[[divisor_column]]
 }
 
+visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_scores_wk[["AREA"]]
 
 
-gam_model <- gam(Restaurants.Bars_visits_weekly ~ s(CASE_COUNT) + 
-                      s(DEATH_COUNT) + s(week) + gain_loss_bias + 
-                      agency + score + HOUSEHOLD_SIZE + 
-                      HOUSEHOLD_INCOME +  BLACK + HISPANIC +
-                      AGE65_PLUS + BACHELOR_S + NO_HEALTH_INSURANCE,
-                    data = df_small, family = gaussian())
+varfun = "ns"
+vardf=3
+argvar <- list(fun=varfun, df=vardf)
+
+### lag function
+lag <- 13
+lagfun="ns"
+lagdf=3
+
+### crossbasis: air temperature
+cb.death <- crossbasis(visits_scores_wk$DEATH_COUNT_log,lag=lag,argvar=argvar,
+                       arglag = list(fun=lagfun, df=lagdf))
+
+### crossbasis: specific humidity
+cb.case_borough <- crossbasis(visits_scores_wk$borough_case_count_log,lag=lag,argvar=argvar,
+                    arglag = list(fun=lagfun, df=lagdf))
+
+### crossbasis: ultraviolet radiation
+cb.UV <- crossbasis(data.all$UV,lag=lag,argvar=argvar,
+                    arglag = list(fun=lagfun, df=lagdf))
+
+gam_model <- gam(Restaurants.Bars_visits_weekly_pp ~ cb.case_borough + cb.death
+                      + s(week,k=10) + loss_aversion_scores_mean + agency_mean + score_mean + StringencyIndex_WeightedAverage + 
+                   BACHELOR_S_pp + NO_HEALTH_INSURANCE + BLACK_pp + HISPANIC_pp + 
+                   HOUSEHOLD_SIZE + HOUSEHOLD_INCOME + EstimatedAverageAge,
+                    data = visits_scores_wk, family = gaussian())
 
 summary(gam_model)
 
