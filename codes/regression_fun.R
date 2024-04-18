@@ -20,6 +20,13 @@ independent_vars_linear = c("gain_loss_bias",
                             "EstimatedAverageAge",'StringencyIndex_WeightedAverage',
                             "BACHELOR_S", "NO_HEALTH_INSURANCE","POPULATION") 
 
+independent_var_list = c("week","borough_case_count_log",
+                         "regulated_loss_median",'regulated_agency_median', "regulated_scores_median",
+                         'StringencyIndex_WeightedAverage',"BACHELOR_S_pp", "NO_HEALTH_INSURANCE","BLACK_pp",
+                         "HISPANIC_pp","HOUSEHOLD_SIZE", "HOUSEHOLD_INCOME", 
+                         "EstimatedAverageAge","no_vehciles_perhousehold",
+                         'zip_char','DEATH_COUNT_log') 
+
 ## standarised
 dependent_var_list <- c('Glocery.Pharmacies_visits_weekly_pp', 'Retails_visits_weekly_pp', 
                         'Arts.Entertainment_visits_weekly_pp', 'Restaurants.Bars_visits_weekly_pp',
@@ -27,13 +34,13 @@ dependent_var_list <- c('Glocery.Pharmacies_visits_weekly_pp', 'Retails_visits_w
 #,"BLACK","HISPANIC"
 # Variables to include with smoothing "CASE_COUNT_log", 
 #  "BACHELOR_S_pp", "NO_HEALTH_INSURANCE","BLACK_pp","HISPANIC_pp""HOUSEHOLD_SIZE", "HOUSEHOLD_INCOME", 
-# "EstimatedAverageAge",
+# "EstimatedAverageAge", "DEATH_COUNT_log"
 #independent_vars_smooth_base = c("week") 
-independent_vars_smooth_base = c("borough_case_count_log", "DEATH_COUNT_log","week") 
-independent_vars_linear_base = c("loss_aversion_scores_median",'agency_median', "score_median",
+independent_vars_smooth_base = c("week","borough_case_count_log",'DEATH_COUNT_log') 
+independent_vars_linear_base = c("regulated_loss_median",'regulated_agency_median', "regulated_scores_median",
                             'StringencyIndex_WeightedAverage',"BACHELOR_S_pp", "NO_HEALTH_INSURANCE","BLACK_pp",
                             "HISPANIC_pp","HOUSEHOLD_SIZE", "HOUSEHOLD_INCOME", 
-                            "EstimatedAverageAge") 
+                            "EstimatedAverageAge","no_vehciles_perhousehold") 
 
 independent_counts <- list(Glocery.Pharmacies_visits_weekly_pp = 'GROCERY_COUNT', 
                            Retails_visits_weekly_pp = 'RETAIL_COUNT', 
@@ -59,7 +66,7 @@ plot_gam_models <- function(dependent_var_list, independent_vars_smooth_base, in
       independent_vars_linear <- independent_vars_linear_base
     }
     
-    smooth_parts <- paste("s(", independent_vars_smooth, ")", collapse = " + ")
+    smooth_parts <- paste("s(", independent_vars_smooth, ",k=11)", collapse = " + ")
     linear_parts <- paste(independent_vars_linear, collapse = " + ")
     formula <- as.formula(paste(dependent_var, "~", smooth_parts, "+", linear_parts))
     #"cb.case_borough + cb.death +",

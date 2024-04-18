@@ -1,8 +1,6 @@
 
 df <- read.csv(file.choose())
 
-df$agency_rescaled <- df$rescale_avail + df$rescale_realistic
-
 
 score_dependent <- c('score', 'agency_rescaled','agency')
 df_score <- df[score_dependent]

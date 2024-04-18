@@ -229,7 +229,7 @@ setnames(employment, c('estimate'), c('Employment'))
 ##Estimate!!Total:!!Public transportation (excluding taxicab):
 public_transportation <- get_acs(geography = "tract", state = '36',
                                  variables = c(householdsize = "B08006_008"), 
-                                 
+                                
                                  year = 2020)
 
 public_transportation <- public_transportation[,c('GEOID','estimate')]
