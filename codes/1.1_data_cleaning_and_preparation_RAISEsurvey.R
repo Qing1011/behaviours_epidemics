@@ -310,4 +310,4 @@ dat_unique <- dat_item %>%
 
 rm(q, scores, presbias, absolmag, gainloss)
 
-write.csv(dat_item, file = "1_3_dat_unique_item.csv")
+write.csv(dat_item, file = "./results/1_3_dat_unique_item.csv")
