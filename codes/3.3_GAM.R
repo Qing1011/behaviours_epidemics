@@ -13,8 +13,9 @@ library(magick)
 library(dlnm)
 library(gridExtra)
 
-source('regression_fun.R')
+source('999_2_regression_fun.R')
 
+##### if have run summary please, skip this part #####
 visits_scores_wk <- read.csv('results/unpivot_merged_data_raw_v9.csv')
 
 ### only use the fourth week of march
@@ -48,7 +49,7 @@ visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_score
 
 visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['no_vehicles']]/visits_scores_wk[['household_num']]
 
-#####  not mapping yet #######
+#####  used in the title #######
 
 name_mapping_dep <- list( 'week' = 'week',
   'borough_case_count_log'= 'log borough case count', 
@@ -83,11 +84,11 @@ independent_vars_linear_base = c("regulated_scores_median","regulated_loss_media
                             'StringencyIndex_WeightedAverage', "NO_HEALTH_INSURANCE","no_vehciles_perhousehold","HOUSEHOLD_SIZE", "HOUSEHOLD_INCOME", "BACHELOR_S_pp", "EstimatedAverageAge","BLACK_pp",
                             "HISPANIC_pp") 
 
+
+##### plot the full gam model results ######
 plot_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_mapping_dep)
 
-
-
-
+###### combine the dependence plots ######
 png_files <- paste0(dependent_var_list, "_gam_model_plot.png")
 images <- list()
 
@@ -111,6 +112,8 @@ if (length(images) > 0) {
   warning("No images were read successfully.")
 }
 
+##### only the score plots ######
+
 plot_scores(dependent_var_list)
 png_files <- paste0(dependent_var_list, "_score_plot.png")
 images <- list()
@@ -123,7 +126,6 @@ for (file_name in png_files) {
     warning(paste("File not found:", file_name))
   }
 }
-
 # Ensure there are images to combine
 if (length(images) > 0) {
   # Combine images horizontally
@@ -135,6 +137,7 @@ if (length(images) > 0) {
   warning("No images were read successfully.")
 }
 
-selected_zips <- list('10025','11234','11375','10304')
+##### plot only selected zipcodes ####
 
+selected_zips <- list('10025','11234','11375','10304')
 plot_zipcodes_for_multiple_vars(visits_scores_wk, selected_zips, dependent_var_list)

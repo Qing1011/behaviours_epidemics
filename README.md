@@ -34,7 +34,7 @@ Use the mapping from (), we can group the tract data into the zipcode level.
 
 To obtain the average age of the zipcode, we use midpoint of the age range in the census data, the calculation is:
 $$
-\frac{\text{midpoint}\times \text{number of people in the range}}{\text{population}}
+\frac{\text{midpoint} \times \text{number of people in the range}}{\text{population}}
 $$
 
 The policy stringency data is avaliable in the Oxford COVID-19 Government Response Tracker (https://www.bsg.ox.ac.uk/research/covid-19-government-response-tracker).
