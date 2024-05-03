@@ -42,4 +42,4 @@ ggplot(dat_lossgain, aes(x = loss_aversion_scores)) +
   geom_histogram(binwidth = 1, fill = "green", color = "black") +
   labs(title = "Histogram of loss_aversion_scores", x = "loss_aversion_scores_bias", y = "Frequency")
 
-write_csv(dat_lossgain,'./results/dat_lossgain.csv')
+write_csv(dat_lossgain,'../results/dat_lossgain.csv')

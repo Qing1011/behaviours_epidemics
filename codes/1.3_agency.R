@@ -1,3 +1,10 @@
+if (!require("factoextra")) install.packages("factoextra")
+if (!require("latticeExtra")) install.packages("latticeExtra")
+if (!require("lavaan")) install.packages("lavaan")
+if (!require("ltm")) install.packages("ltm")
+if (!require("mirt")) install.packages("mirt")
+if (!require("psych")) install.packages("psych")
+
 ### Calculate the agency ###
 library(dplyr)
 ######## select the agency data
@@ -73,7 +80,7 @@ dat_agency_scores[2:19] <- data.frame(lapply(
   }
 ))
 # export the results#
-write.csv(dat_agency_scores, "agency_scores.csv", row.names = FALSE)
+write.csv(dat_agency_scores, "../results/agency_scores.csv", row.names = FALSE)
 ########## PCA###########################
 # to standarise the data in order to evaluate
 res_pca <- prcomp(dat_agency_scores[, 2:15], scale. = TRUE)
@@ -155,7 +162,6 @@ agency_uber_avail + agency_uber_realistic + agency_delivery_avail + agency_deliv
 cat(model_formula)
 
 ## Running Analysis
-library(lavaan)
 my.cfa <- cfa(model_formula, data = standardized_data, std.lv = T)
 
 ### Model fit
@@ -269,7 +275,7 @@ for (i in 1:14) {
   desc.stat[i, 4:8] <- proportions
 }
 
-write.csv(desc.stat, "agency_stat.csv", row.names = TRUE)
+write.csv(desc.stat, "../results/agency_stat.csv", row.names = TRUE)
 ### correlations####
 library(reshape2)
 corr_matrix <- cor(dat_agency_scores[2:15]) %>% round(3)

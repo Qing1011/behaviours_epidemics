@@ -13,9 +13,9 @@ library(magick)
 library(dlnm)
 library(gridExtra)
 
-source('/Users/qing/GitHub/behaviours_epidemics/codes/regression_fun.R')
+source('regression_fun.R')
 
-visits_scores_wk <- read.csv(file.choose())
+visits_scores_wk <- read.csv('results/unpivot_merged_data_raw_v9.csv')
 
 ### only use the fourth week of march
 names_to_exclude <- c(10003,10004,10007,10009)
@@ -47,6 +47,8 @@ for (col in columns_to_divide) {
 visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_scores_wk[["AREA"]]
 
 visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['no_vehicles']]/visits_scores_wk[['household_num']]
+
+#####  not mapping yet #######
 
 name_mapping_dep <- list( 'week' = 'week',
   'borough_case_count_log'= 'log borough case count', 
@@ -104,7 +106,7 @@ if (length(images) > 0) {
   combined_image <- image_append(image_join(images), stack = FALSE)
   
   # Save the combined image
-  image_write(combined_image, "combined_image.png")
+  image_write(combined_image, "../results/combined_image.png")
 } else {
   warning("No images were read successfully.")
 }
@@ -128,7 +130,7 @@ if (length(images) > 0) {
   combined_image <- image_append(image_join(images), stack = FALSE)
   
   # Save the combined image
-  image_write(combined_image, "combined_image_scores.png")
+  image_write(combined_image, "../results/combined_image_scores.png")
 } else {
   warning("No images were read successfully.")
 }
