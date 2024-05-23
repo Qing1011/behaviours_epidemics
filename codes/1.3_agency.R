@@ -9,10 +9,10 @@ if (!require("psych")) install.packages("psych")
 library(dplyr)
 ######## select the agency data
 dat_agency <- dat %>%
-  select(ResponseId, agency_pub_trans_avail:agency_remote_realistic)
-# there is one id R_3CKphd7v4L4nZVw who did not finish the questions,
-# count the NA in each columns
+  dplyr::select(ResponseId, agency_pub_trans_avail:agency_remote_realistic)
 
+
+# count the NA in each columns
 na_count <- sapply(dat_agency, function(x) sum(is.na(x)))
 # Convert the counts to a data frame for plotting
 na_count_df <- data.frame(column = names(na_count)[2:19], na_count = na_count[2:19])

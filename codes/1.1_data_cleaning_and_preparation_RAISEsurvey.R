@@ -10,11 +10,11 @@ if (!require("scales")) install.packages("scales")
 source("999_1_auxiliary_functions.R") #this is a reduced file with only the required functions
 options(digits = 3)
 options(scipen = 99)
-
+library(dplyr)
 ########################
 # 1. Data cleaning
 ########################
-dat <- read_csv("RAISE_base_survey_Jan_2024.csv") #load in the data
+dat <- read_csv("../data/RAISE+Base+Survey_January+24,+2024_13.50.csv") #load in the data
 dat <- dat[-c(1,2), -c(1:3, 9:12, 94:101) ] #remove the first two rows and several unneeded columns
 
 #initial data quality checks
@@ -23,14 +23,14 @@ dat <- dat %>%
          duration = as.numeric(`Duration (in seconds)`),
          Progress = as.numeric(Progress)) %>%
   #basics: consent, passed the attention check, and completed most of the questions, remove if not
-  filter(Q1.1 == "CONSENT" & Q4.1 == "PASS" & Progress >= 90) %>%#down to N = 1443
+  filter(
+    (Q1.1 == "CONSENT" & Q4.1 == "PASS" & Progress >= 90),  #down to N = 1443
   #advanced: minimum and maximum response times and age less than 100
-    filter(duration < ((median(duration) - mad(duration)) * 3), #max duration, down to N = 1066
+    duration < median(duration) + mad(duration)* 3, #median + mad(duration)*3, down to N = 1066
     duration > 120, #min duration, N = 1063
     (is.na(Age) | Age < 100)) %>% #age must be plausible, N = 1062
-    distinct(ResponseId, .keep_all = TRUE) %>% #make sure we have no duplicates, N = 1062
-  select(
-    -UserLanguage, #user language
+  distinct(ResponseId, .keep_all = TRUE) %>% #make sure we have no duplicates, N = 1062
+  select(-UserLanguage, #user language
     -DistributionChannel, #channels for distribution
     -Q1.1, # Consent
     -Q4.1, # Attention_check,
@@ -39,8 +39,7 @@ dat <- dat %>%
     -Progress,
     -Finished,
     -RecordedDate,
-    -Q10.7
-    )  
+    -Q10.7)  
 
 # Data cleaning and recoding of categories for main variables.
 dat <- dat %>%
@@ -149,7 +148,7 @@ dat <- dat %>%
         str_detect(Q7.2, "A 75% chance of") ~ 1,
         str_detect(Q7.2, "Guarantee") ~ 0
     )) %>%
-    select( - Q7.2) %>%
+    dplyr::select( - Q7.2) %>%
     rename(Common_difference = "Q7.1") %>% #aka pres_bias
     relocate(Common_difference, .after = Gain5050)
     
