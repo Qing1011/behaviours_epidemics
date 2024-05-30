@@ -1,3 +1,7 @@
+###
+### inner join with the dat agency and loss adversion
+dat <- dat[dat$ResponseId %in% dat_agency_scores$ResponseId, ]
+dat <- dat[dat$ResponseId %in% dat_lossgain$ResponseId, ]
 #### 
 # check the zipcode answers
 ###
@@ -11,17 +15,17 @@ na_count <- dat %>%
             nrow()
 # na_count
 # [1] 0 Q1.2 is full completed
-
 dat <- dat %>%
   mutate(zipcodeflag = ifelse(zipcode == work_zipcode, 1, 0))
-
 
 selected_data <- dat %>%
        filter(zipcodeflag == 0 | is.na(zipcodeflag)) %>%
        select(zipcode, work_zipcode, zipcodeflag)
 
 write.csv(selected_data, file = "zipcode_flags.csv", row.names = FALSE)
+############################
 #### count the responses of each zipcode Q1.2
+############################
 value_counts <- table(dat$zipcode)
 # Convert the table to a dataframe
 value_counts_df <- as.data.frame(value_counts)

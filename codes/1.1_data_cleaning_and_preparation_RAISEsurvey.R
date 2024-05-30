@@ -30,7 +30,7 @@ dat <- dat %>%
     duration > 120, #min duration, N = 1063
     (is.na(Age) | Age < 100)) %>% #age must be plausible, N = 1062
   distinct(ResponseId, .keep_all = TRUE) %>% #make sure we have no duplicates, N = 1062
-  select(-UserLanguage, #user language
+  dplyr::select(-UserLanguage, #user language
     -DistributionChannel, #channels for distribution
     -Q1.1, # Consent
     -Q4.1, # Attention_check,

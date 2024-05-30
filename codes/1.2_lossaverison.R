@@ -2,11 +2,13 @@
 # There are three questions about gain and three about loss respectively
 # Then we can calculate the gain (0-3), loss (0-3) 
 # The loss aversion is the add up of gain bias and loss bias
+#dat_lossgain <- dat %>% current we are not using the masking and indoor data
+ # dplyr::select(ResponseId, loss_gain_1:loss_loss_3, mask_march2020:mask_winter2020, indoor_march2020:indoor_winter2020 )
 dat_lossgain <- dat %>%
-  select(ResponseId, loss_gain_1:loss_loss_3, mask_march2020:mask_winter2020, indoor_march2020:indoor_winter2020 )
+  dplyr::select(ResponseId, loss_gain_1:loss_loss_3)
 # there is one id R_3CKphd7v4L4nZVw who did not finish the questions, 
-# we need to delete it from the whole sample 
-dat_lossgain <- na.omit(dat_lossgain)
+# we need to delete it from the whole sample # down to 1348
+dat_lossgain <- na.omit(dat_lossgain)  
 
 dat_lossgain <- dat_lossgain %>%
   mutate(loss_gain_1 = recode(loss_gain_1, "An 80% chance of receiving $6,000" = 0, 

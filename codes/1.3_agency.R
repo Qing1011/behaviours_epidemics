@@ -71,7 +71,8 @@ subset_df <- dat_agency_scores[, 2:15]
 # Use complete.cases() to find rows with complete answers in the subset
 complete_rows <- complete.cases(subset_df)
 # Subset the original dataframe to keep only the rows with complete answers
-dat_agency_scores <- dat_agency_scores[complete_rows, ]
+dat_agency_scores <- dat_agency_scores[complete_rows, ] ## there are 5 respondents not complete
+## down to 1344
 # Convert the replaced values back to numeric if needed
 dat_agency_scores[2:19] <- data.frame(lapply(
   dat_agency_scores[2:19],
