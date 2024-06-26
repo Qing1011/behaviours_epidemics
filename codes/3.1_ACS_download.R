@@ -6,14 +6,14 @@ library(tidyverse)
 library(data.table)
 
 census_api_key("919b37e63df029d1420900f893770f49d4a03226") #,install = TRUE
-v19 <- load_variables(2019, "acs5", cache = TRUE)
+v20 <- load_variables(2020, "acs5", cache = TRUE)
 View(v20)
-write_csv(v19,'variable_namesv19.csv')
+#write_csv(v20,'variable_namesv20.csv')
 
 # population: B25026_001, Estimate!!Total population in occupied housing units:
-population <- get_acs(geography = 'tract', state = '36', survey = "acs5",
-                      variables = c(population = "B25026_001"), 
-                      year = 2020)
+#population <- get_acs(geography = 'tract', state = '36', survey = "acs5",
+                      #variables = c(population = "B25026_001"), 
+                      #year = 2020)
 
 #population <- population[,c('GEOID','estimate')]
 #setnames(population, c('estimate'), c('Population'))
@@ -47,57 +47,11 @@ for (a_i in race_group_popu)
 setnames(population, c('estimate'), c('Population'))
 
 
-###############*******################
-#no population density
-## two categories: 1) 1.00 or less occupants per room, 
-## 2) 1.01 or more occupants per room
-##  add all the following groups together to get the total number of people in each category
-# White alone
-# Black or African American Alone
-# American Indian and Alaska Native Alone
-# Asian Alone
-# Native Hawaiian and Other Pacific Islander Alone
-# Some Other Race Alone
-# Two or More Races
-#### note this should not included(# White Alone, Not Hispanic or Latino
-# Hispanic or Latino)
-####  Estimate!!Total:!!1.00 or less occupants per room
-person_per_room1 <- get_acs(geography = 'tract', state = '36',
-                            variables = c(person_per_room1 = "B25014A_002"),
-                            year = 2020)
-person_per_room1 <- person_per_room1[,c('GEOID','estimate')]
-
-for (race in c('B25014B_002', "B25014C_002","B25014D_002","B25014E_002", "B25014F_002", "B25014G_002"))
-{
-  person_per_room1_temp <- get_acs(geography = 'tract', state = '36',
-                                   variables = c(person_per_room1_temp = race),
-                                   year = 2020)    
-  person_per_room1_temp <- person_per_room1_temp[,c('GEOID','estimate')]
-  person_per_room1$estimate <- person_per_room1$estimate + person_per_room1_temp$estimate
-}
-setnames(person_per_room1, c('estimate'), c('person_per_room1'))
-
-### Estimate!!Total:!!1.01 or more occupants per room
-person_per_room2 <- get_acs(geography = 'tract', state = '36',
-                            variables = c(person_per_room1 = "B25014A_003"),
-                            year = 2020)
-person_per_room2 <- person_per_room2[,c('GEOID','estimate')]
-
-for (race in c('B25014B_003', "B25014C_003","B25014D_003","B25014E_003", "B25014F_003", "B25014G_003"))
-{
-  person_per_room2_temp <- get_acs(geography = 'tract', state = '36',
-                                   variables = c(person_per_room1_temp = race),
-                                   year = 2020)    
-  person_per_room2_temp <- person_per_room2_temp[,c('GEOID','estimate')]
-  person_per_room2$estimate <- person_per_room2$estimate + person_per_room2_temp$estimate
-}
-setnames(person_per_room2, c('estimate'), c('person_per_room2'))
 
 ###############*******################
 #B01001B_001 Estimate!!Total: SEX BY AGE (BLACK OR AFRICAN AMERICAN ALONE)
 black <- get_acs(geography = "tract", state = '36',
                  variables = c(black = "B02001_003"), 
-                 
                  year = 2020)
 black <- black[,c('GEOID','estimate')]
 setnames(black, c('estimate'), c('Black'))
@@ -107,45 +61,10 @@ setnames(black, c('estimate'), c('Black'))
 # B03001_003, Estimate!!Total:!!SEX BY AGE (HISPANIC OR LATINO)
 hispanic <- get_acs(geography = "tract", state = '36',
                     variables = c(hispanic = "B01001I_001"), 
-                    
                     year = 2020)
 
 hispanic <- hispanic[,c('GEOID','estimate')]
 setnames(hispanic, c('estimate'), c('Hispanic'))
-
-###############*******################
-#Asian 
-# Estimate!!Total: is adding  all the following groups together to get the total number of people in each category
-# Estimate!!Total:!!Asian Indian
-# Estimate!!Total:!!Bangladeshi
-# Estimate!!Total:!!Bhutanese
-# Estimate!!Total:!!Burmese
-# Estimate!!Total:!!Cambodian
-# Estimate!!Total:!!Chinese, except Taiwanese
-# Estimate!!Total:!!Filipino
-# Estimate!!Total:!!Hmong
-# Estimate!!Total:!!Indonesian
-# Estimate!!Total:!!Japanese
-# Estimate!!Total:!!Korean
-# Estimate!!Total:!!Laotian
-# Estimate!!Total:!!Malaysian
-# Estimate!!Total:!!Mongolian
-# Estimate!!Total:!!Nepalese
-# Estimate!!Total:!!Okinawan
-# Estimate!!Total:!!Pakistani
-# Estimate!!Total:!!Sri Lankan
-# Estimate!!Total:!!Taiwanese
-# Estimate!!Total:!!Thai
-# Estimate!!Total:!!Vietnamese
-# Estimate!!Total:!!Other Asian, specified
-# Estimate!!Total:!!Other Asian, not specified
-# Estimate!!Total:!!Two or more Asian
-asian <- get_acs(geography = 'tract', state = '36',
-                 variables = c(Asian = "B02015_001"),
-                 
-                 year = 2020)
-asian <- asian[,c('GEOID','estimate')]
-setnames(asian, c('estimate'), c('Asian'))
 
 
 ###############*******################
@@ -154,7 +73,6 @@ setnames(asian, c('estimate'), c('Asian'))
 #householdincome: MEDIAN HOUSEHOLD INCOME IN THE PAST 12 MONTHS (IN 2020 INFLATION-ADJUSTED DOLLARS) BY HOUSEHOLD SIZE
 householdincome <- get_acs(geography = "tract", state = '36',
                            variables = c(householdincome = "B19019_001"), 
-                           
                            year = 2020)
 householdincome <- householdincome[,c('GEOID','estimate')]
 setnames(householdincome, c('estimate'), c('Householdincome'))
@@ -164,105 +82,37 @@ setnames(householdincome, c('estimate'), c('Householdincome'))
 #bachelor: B06009_005, Estimate!!Total:!!Bachelor's degree
 bachelor <- get_acs(geography = "tract", state = '36',
                     variables = c(bachelor = "B06009_005"), 
-                    
                     year = 2020)
 bachelor <- bachelor[,c('GEOID','estimate')]
 setnames(bachelor, c('estimate'), c('Bachelor'))
 
 ###############*******################
-#household size
-#householdsize: B25010_001, Estimate!!Average household size --!!Total:
-## 2020 does not have this variable， we can use the population/the nunber of households to get the average household size  B08201_001 = B08202_001 adding up all the household size breakdowns.
+#household num
 households <- get_acs(geography = "tract", state = '36',
-                      variables = c(householdsize = "B08202_001"), 
-                      
+                      variables = c(households_num = "B08202_001"), 
                       year = 2020)
 
 households <- households[,c('GEOID','estimate')]
 setnames(households, c('estimate'), c('Households_num'))
-
-#employment
-## add up all the age groups of female and males.
-## cilivian labor force: not inlude the army forces 
-age_group <- c( 'B23001_014',  'B23001_021',
-                'B23001_028',
-                'B23001_035',
-                'B23001_042',
-                'B23001_049',
-                'B23001_056',
-                'B23001_063',
-                'B23001_070',
-                'B23001_075',
-                'B23001_080',
-                'B23001_085',
-                'B23001_093',
-                'B23001_100',
-                'B23001_107',
-                'B23001_114',
-                'B23001_121',
-                'B23001_128',
-                'B23001_135',
-                'B23001_142',
-                'B23001_149',
-                'B23001_156',
-                'B23001_161',
-                'B23001_166',
-                'B23001_171')
-employment <- get_acs(geography = 'tract', state = '36',
-                      variables = c(employment = 'B23001_007'),
-                      year = 2020)
-employment<- employment[,c('GEOID','estimate')]
-
-for (a_i in age_group)
-{
-  employment_temp <- get_acs(geography = 'tract', state = '36',
-                             variables = c(employment_temp = a_i),
-                             
-                             year = 2020)    
-  employment_temp <- employment_temp[,c('GEOID','estimate')]
-  employment$estimate <- employment$estimate + employment_temp$estimate
-}
-
-setnames(employment, c('estimate'), c('Employment'))
-
-#urban/rural(?)
-##Estimate!!Total:!!Public transportation (excluding taxicab):
-public_transportation <- get_acs(geography = "tract", state = '36',
-                                 variables = c(householdsize = "B08006_008"), 
-                                
-                                 year = 2020)
-
-public_transportation <- public_transportation[,c('GEOID','estimate')]
-setnames(public_transportation, c('estimate'), c('Public_transportation'))
 
 ###############*******################
 #vehicles owned
 #### Estimate!!Total:!!No vehicle available	HOUSEHOLD SIZE BY VEHICLES AVAILABLE
 #### by occupied housing units
 no_vehicle <- get_acs(geography = "tract", state = '36',
-                      variables = c(householdsize = "B08201_002"), 
-                      
+                      variables = c(no_vehicle = "B08201_002"), 
                       year = 2020)
 
 no_vehicle <- no_vehicle[,c('GEOID','estimate')]
 setnames(no_vehicle, c('estimate'), c('No_vehicle'))
 
-##### 1 or more vehicles available by occupied housing units
-vehicle_owned <- get_acs(geography = 'tract', state = '36',
-                         variables = c(vehicle_owned = "B08201_003"),
-                         year = 2020)
-vehicle_owned <- vehicle_owned[,c('GEOID','estimate')]
 
-for (race in c('B08201_004', "B08201_005","B08201_006"))
-{
-  vehicle_owned_temp <- get_acs(geography = 'tract', state = '36',
-                                variables = c(vehicle_owned_temp = race),
-                                year = 2020)    
-  vehicle_owned_temp <- vehicle_owned_temp[,c('GEOID','estimate')]
-  vehicle_owned$estimate <- vehicle_owned$estimate + vehicle_owned_temp$estimate
-}
-setnames(vehicle_owned, c('estimate'), c('Vehicle_owned'))
-
+#############********################
+health_insurance <- get_acs(geography = "tract", state = '36',
+                      variables = c(health_insurance = "B27001_001"), 
+                      year = 2020)
+health_insurance <- health_insurance[,c('GEOID','estimate')]
+setnames(health_insurance, c('estimate'), c('health_insurance'))
 
 ###############*******################
 # age groups
@@ -588,20 +438,34 @@ for (g in age75plus_groups)
   age75plus$estimate <- age75plus$estimate + age75plus_temp$estimate
 }
 setnames(age75plus, c('estimate'), c('Age75plus'))
-
-
+#############********################
+#householdsize: B25010_001, Estimate!!Average household size --!!Total:
+householdsize <- get_acs(geography = "block group", 
+                    variables = c(householdsize = "B25010_001"), 
+                    state = "NY", 
+                    year = 2020)
+householdsize <- householdsize[,c('GEOID','estimate')]
+setnames(householdsize, c('estimate'), c('Householdsize'))
+###### this is 12 digits ####
+####aggrated into 11 digits####
+householdsize$tract <- substr(householdsize$GEOID, 1, 11)
+# take the mean value of all the block group as the value of the tract.
+householdsize_f <- householdsize %>%
+  group_by(tract) %>%
+  summarise(mean_householdsize = mean(Householdsize, na.rm = TRUE))%>%
+  rename(GEOID = tract)
+# fill the na value with 0 
+householdsize_f$mean_householdsize[is.na(householdsize_f$mean_householdsize)] <- 0
+##############***************###################
 
 #combine
 zipcodedataNY <- population
 
 zipcodedataNY <- merge(zipcodedataNY, black, by="GEOID")
 zipcodedataNY <- merge(zipcodedataNY, hispanic, by="GEOID")
-zipcodedataNY <- merge(zipcodedataNY, asian, by="GEOID")
 
 zipcodedataNY <- merge(zipcodedataNY, householdincome, by="GEOID")
-
 zipcodedataNY <- merge(zipcodedataNY, bachelor, by="GEOID")
-
 zipcodedataNY <- merge(zipcodedataNY, households, by="GEOID")
 
 zipcodedataNY <- merge(zipcodedataNY, ageunder5, by="GEOID")
@@ -613,20 +477,11 @@ zipcodedataNY <- merge(zipcodedataNY, age45to64, by="GEOID")
 zipcodedataNY <- merge(zipcodedataNY, age65to74, by="GEOID")
 zipcodedataNY <- merge(zipcodedataNY, age75plus, by="GEOID")
 
-zipcodedataNY <- merge(zipcodedataNY, employment, by="GEOID")
 
 zipcodedataNY <- merge(zipcodedataNY, no_vehicle, by="GEOID")
-zipcodedataNY <- merge(zipcodedataNY, vehicle_owned, by="GEOID")
+zipcodedataNY <- merge(zipcodedataNY, health_insurance, by="GEOID")
 
-zipcodedataNY <- merge(zipcodedataNY, public_transportation, by="GEOID")
+zipcodedataNY <- merge(zipcodedataNY, householdsize_f, by="GEOID")
 
-# zipcodedataNY <- merge(zipcodedataNY, person_per_room1, by="GEOID")
-# zipcodedataNY <- merge(zipcodedataNY, person_per_room2, by="GEOID")
-
-
-
-path_out =  "~/OneDrive - Columbia University Irving Medical Center/0_behaviours_mobility_epidemics/Data/"
-
-fileName = paste(path_out, 'tract_data2020.csv',sep = '')
-
+fileName = c('../data/tract_data2020.csv')
 write.csv(zipcodedataNY, file = fileName, row.names=FALSE)

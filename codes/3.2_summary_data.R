@@ -19,13 +19,16 @@ get_summary <- function(data_s, filename){
   write.csv(summary_df, file = filename, row.names = FALSE)
 }
 
-visits_scores_wk <- read.csv('../results/unpivot_merged_data_raw_v9.csv')
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+visits_scores_wk <- read.csv('../data/unpivot_merged_data_raw.csv')
 
-### only use the fourth week of march
-names_to_exclude <- c(10003,10004,10007,10009)
+### only use the fourth week of Feb
+mod_counts <- read.csv('../results/modzcta_zip_counts.csv')
+select_mod <- mod_counts[mod_counts$modzcta_count > 10, "MODZCTA"]
 
 # Selecting subset where name is not in the list
-visits_scores_wk <- visits_scores_wk[!visits_scores_wk$zip_char %in% names_to_exclude, ]
+visits_scores_wk <- visits_scores_wk[visits_scores_wk$MODZCTA %in% select_mod, ]
+
 
 # Define the columns you want to divide
 # The column to divide by
@@ -33,9 +36,9 @@ columns_to_divide_100 <- c('Glocery.Pharmacies_visits_weekly', 'Retails_visits_w
                        'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
                        'Educations_visits_weekly', 'Healthcares_visits_weekly',
                        'others_visits_weekly')
-columns_to_divide <- c("BACHELOR_S","BLACK","HISPANIC")
+columns_to_divide <- c("weighted_Bachelor","weighted_Black","weighted_Hispanic",'weighted_no_health_insurance')
 
-divisor_column <- "POP_DENOMINATOR"
+divisor_column <- "weighted_Population"
 
 # Loop through each column to divide
 for (col in columns_to_divide_100) {
@@ -48,44 +51,48 @@ for (col in columns_to_divide) {
   new_col_name <- paste(col, "pp", sep = "_")
   visits_scores_wk[[new_col_name]] <- (visits_scores_wk[[col]] / visits_scores_wk[[divisor_column]])
 }
-visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_scores_wk[["AREA"]]
+#visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_scores_wk[["AREA"]]
 
-visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['no_vehicles']]/visits_scores_wk[['household_num']]
+visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['weighted_No_vehicle']]/visits_scores_wk[['weighted_Households_num']]
+
+
 
 #####  not mapping yet #######
-
 name_mapping_dep <- list( 'week' = 'week',
-  'borough_case_count_log'= 'log borough case count', 
- 'DEATH_COUNT_log'= 'log NYC death count', 
- 'regulated_scores_median' = 'temporal discounting score',
- 'regulated_loss_median' = 'loss aversion score' ,
- 'regulated_agency_median' = 'agency score',
-  'StringencyIndex_WeightedAverage' = 'stringency index',
-  'NO_HEALTH_INSURANCE' = 'no health insurance rate',
-  'no_vehciles_perhousehold' = 'no vehicle household rate',
-  'HOUSEHOLD_SIZE' = 'household size',
-  'HOUSEHOLD_INCOME' = 'household income',
-  'BACHELOR_S_pp' = 'percent people own bachelor degrees',
-  'EstimatedAverageAge' = 'weighted averages age',
-  'BLACK_pp' = 'percent Black residents',
-  'HISPANIC_pp' = 'percent Hispanic residents',
-  'Glocery.Pharmacies_visits_weekly_pp' = 'Glocery.Pharmacies',
-  'Retails_visits_weekly_pp' ='Retails',
-  'Arts.Entertainment_visits_weekly_pp' = 'Arts.Entertainment',
-  'Restaurants.Bars_visits_weekly_pp' = 'Restaurants.Bars',
-  'Educations_visits_weekly_pp'= 'Educations',
-  'Healthcares_visits_weekly_pp'= 'Healthcares'
-  )
+                          'borough_case_count_log'= 'log borough case count', 
+                          'COVID_CASE_COUNT_log' = 'log modzcta case count',
+                          'DEATH_COUNT_log'= 'log NYC death count', 
+                          'regulated_scores_median' = 'temporal discounting score',
+                          'regulated_loss_median' = 'loss aversion score' ,
+                          'regulated_agency_median' = 'agency score',
+                          'StringencyIndex_WeightedAverage' = 'stringency index',
+                          'weighted_no_health_insurance_pp' = 'no health insurance rate',
+                          'no_vehciles_perhousehold' = 'no vehicle household rate',
+                          'weighted_household_size_mean' = 'household size',
+                          'weighted_household_income_mean' = 'household income',
+                          'weighted_Bachelor_pp' = 'percent people own bachelor degrees',
+                          'weighted_estimated_average_age_mean' = 'weighted average age',
+                          'weighted_Black_pp' = 'percent Black residents',
+                          'weighted_Hispanic_pp' = 'percent Hispanic residents',
+                          'Glocery.Pharmacies_visits_weekly_pp' = 'Glocery and Pharmacy',
+                          'Retails_visits_weekly_pp' ='General Retail',
+                          'Arts.Entertainment_visits_weekly_pp' = 'Art and Entertainment',
+                          'Restaurants.Bars_visits_weekly_pp' = 'Restaurant and Bar',
+                          'Educations_visits_weekly_pp'= 'Education',
+                          'Healthcares_visits_weekly_pp'= 'Healthcare'
+)
 
+names(visits_scores_wk)[names(visits_scores_wk) %in% names(name_mapping_dep)] <- name_mapping_dep
 
-dependent_var_list <- c('Glocery.Pharmacies_visits_weekly_pp', 'Retails_visits_weekly_pp', 
-                        'Arts.Entertainment_visits_weekly_pp', 'Restaurants.Bars_visits_weekly_pp',
-                        'Educations_visits_weekly_pp', 'Healthcares_visits_weekly_pp')
+dependent_var_list <- c('Glocery and Pharmacy', 'General Retail', 
+                        'Art and Entertainment', 'Restaurant and Bar',
+                        'Education', 'Healthcare')
 
-independent_vars_smooth_base = c("week","borough_case_count_log")  #,'DEATH_COUNT_log'
-independent_vars_linear_base = c("regulated_scores_median","regulated_loss_median",'regulated_agency_median', 
-                            'StringencyIndex_WeightedAverage', "NO_HEALTH_INSURANCE","no_vehciles_perhousehold","HOUSEHOLD_SIZE", "HOUSEHOLD_INCOME", "BACHELOR_S_pp", "EstimatedAverageAge","BLACK_pp",
-                            "HISPANIC_pp") 
+independent_vars_smooth_base = c("week","log borough case count","log modzcta case count")  #,'DEATH_COUNT_log'
+independent_vars_linear_base = c("temporal discounting score","loss aversion score",'agency score', 
+                            'stringency index', "no health insurance rate","no vehicle household rate","household size", "household income", "percent people own bachelor degrees", 
+                            "weighted average age","percent Black residents",
+                            "percent Hispanic residents") 
 
 
 independ_data <- visits_scores_wk[c(independent_vars_linear_base,'week')]

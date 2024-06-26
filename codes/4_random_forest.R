@@ -1,40 +1,10 @@
 ### random forest####
 library('ranger')
-visits_scores_wk <- read.csv(file.choose())
-names_to_exclude <- c(10003,10004,10007,10009)
+
+
 
 # Selecting subset where name is not in the list
-visits_scores_wk <- visits_scores_wk[!visits_scores_wk$zip_char %in% names_to_exclude, ]
-columns_to_divide <- c('Glocery.Pharmacies_visits_weekly', 'Retails_visits_weekly', 
-                       'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
-                       'Educations_visits_weekly', 'Healthcares_visits_weekly',
-                       'others_visits_weekly',"BACHELOR_S","BLACK","HISPANIC","AREA",'vehicle_owned')
-
-
-divisor_column <- "POPULATION"
-
-# Loop through each column to divide
-for (col in columns_to_divide) {
-  # Construct the new column name
-  new_col_name <- paste(col, "pp", sep = "_")
-  visits_scores_wk[[new_col_name]] <- visits_scores_wk[[col]] / visits_scores_wk[[divisor_column]]
-}
-
-visits_scores_wk[['no_vehciles_perhousehold']] <- 
-  visits_scores_wk[['no_vehicles']] / visits_scores_wk[['household_num']]
-
-
-
-dependent_var_list <- c('Glocery.Pharmacies_visits_weekly_pp', 'Retails_visits_weekly_pp', 
-                        'Arts.Entertainment_visits_weekly_pp', 'Restaurants.Bars_visits_weekly_pp',
-                        'Educations_visits_weekly_pp', 'Healthcares_visits_weekly_pp')
-
-independent_var_list = c("week","borough_case_count_log",
-                         "regulated_loss_median",'regulated_agency_median', "regulated_scores_median",
-                                 'StringencyIndex_WeightedAverage',"BACHELOR_S_pp", "NO_HEALTH_INSURANCE","BLACK_pp",
-                                 "HISPANIC_pp","HOUSEHOLD_SIZE", "HOUSEHOLD_INCOME", 
-                                 "EstimatedAverageAge","no_vehciles_perhousehold",
-                         'zip_char','DEATH_COUNT_log') 
+independent_var_list <- c(independent_vars_linear_base, independent_vars_smooth_base)
 
 plot_list <- list()  # To store ggplot objects for later display
 
@@ -69,11 +39,13 @@ for (y in dependent_var_list) {
   
   # Apply this function to each feature
   importance <- sapply(independent_var_list, function(feature) compute_importance(visits_scores_wk, feature))
-  
+  importance_normalized <- importance / max(importance)
+
+
   # Create dataframe for plotting
   importance_df <- data.frame(
     Feature = names(importance),
-    Importance = as.numeric(importance)
+    Importance = as.numeric(importance_normalized) #### to normalise it
   )
   
   # Plot using ggplot2

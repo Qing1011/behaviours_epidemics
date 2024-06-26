@@ -12,27 +12,32 @@ library(reshape2)
 library(magick)
 library(dlnm)
 library(gridExtra)
+library(dplyr)
 
 source('999_2_regression_fun.R')
 
 ##### if have run summary please, skip this part #####
-visits_scores_wk <- read.csv('results/unpivot_merged_data_raw_v9.csv')
-
-### only use the fourth week of march
-names_to_exclude <- c(10003,10004,10007,10009)
+visits_scores_wk <- read.csv('../data/unpivot_merged_data_raw.csv')
+#### use one has been cleaned in 3.2
+mod_counts <- read.csv('../results/modzcta_zip_counts.csv')
+select_mod <- mod_counts[mod_counts$modzcta_count > 10, "MODZCTA"]
 
 # Selecting subset where name is not in the list
-visits_scores_wk <- visits_scores_wk[!visits_scores_wk$zip_char %in% names_to_exclude, ]
+visits_scores_wk <- visits_scores_wk[visits_scores_wk$MODZCTA %in% select_mod, ]
+
 
 # Define the columns you want to divide
 # The column to divide by
 columns_to_divide_100 <- c('Glocery.Pharmacies_visits_weekly', 'Retails_visits_weekly', 
-                       'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
-                       'Educations_visits_weekly', 'Healthcares_visits_weekly',
-                       'others_visits_weekly')
-columns_to_divide <- c("BACHELOR_S","BLACK","HISPANIC")
+                           'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
+                           'Educations_visits_weekly', 'Healthcares_visits_weekly',
+                           'others_visits_weekly')
+columns_to_divide <- c("weighted_Bachelor","weighted_Black","weighted_Hispanic",'weighted_no_health_insurance')
 
-divisor_column <- "POP_DENOMINATOR"
+#columns_to_divide <- c("BACHELORS","BLACK","HISPANIC")
+
+#divisor_column <- "POP_DENOMINATOR"
+divisor_column <- "weighted_Population"
 
 # Loop through each column to divide
 for (col in columns_to_divide_100) {
@@ -45,51 +50,85 @@ for (col in columns_to_divide) {
   new_col_name <- paste(col, "pp", sep = "_")
   visits_scores_wk[[new_col_name]] <- (visits_scores_wk[[col]] / visits_scores_wk[[divisor_column]])
 }
-visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_scores_wk[["AREA"]]
+#visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_scores_wk[["AREA"]]
 
-visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['no_vehicles']]/visits_scores_wk[['household_num']]
+visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['weighted_No_vehicle']]/visits_scores_wk[['weighted_Households_num']]
 
 #####  used in the title #######
+visits_scores_wk <- visits_scores_wk %>%
+  rename(log_borough_case_count = 'borough_case_count_log', 
+         log_modzcta_case_count = 'COVID_CASE_COUNT_log',
+         log_NYC_death_count = 'DEATH_COUNT_log', 
+         temporal_discounting_score = 'regulated_scores_median',
+         loss_aversion_score = 'regulated_loss_median',
+         agency_score = 'regulated_agency_median',
+         stringency_index = 'StringencyIndex_WeightedAverage',
+         no_health_insurance_rate = 'weighted_no_health_insurance_pp',
+         no_vehicle_household_rate = 'no_vehciles_perhousehold',
+         household_size = 'weighted_household_size_mean',
+         household_income = 'weighted_household_income_mean',
+         percent_people_own_bachelor_degrees  = 'weighted_Bachelor_pp',
+         weighted_average_age = 'weighted_estimated_average_age_mean',
+         percent_Black_residents = 'weighted_Black_pp',
+         percent_Hispanic_residents  = 'weighted_Hispanic_pp',
+         Glocery_and_Pharmacy  = 'Glocery.Pharmacies_visits_weekly_pp',
+         General_Retail  = 'Retails_visits_weekly_pp',
+         Art_and_Entertainment  = 'Arts.Entertainment_visits_weekly_pp',
+         Restaurant_and_Bar  = 'Restaurants.Bars_visits_weekly_pp',
+         Education  = 'Educations_visits_weekly_pp',
+         Healthcare = 'Healthcares_visits_weekly_pp'
+)
 
-name_mapping_dep <- list( 'week' = 'week',
-  'borough_case_count_log'= 'log borough case count', 
- 'DEATH_COUNT_log'= 'log NYC death count', 
- 'regulated_scores_median' = 'temporal discounting score',
- 'regulated_loss_median' = 'loss aversion score' ,
- 'regulated_agency_median' = 'agency score',
-  'StringencyIndex_WeightedAverage' = 'stringency index',
-  'NO_HEALTH_INSURANCE' = 'no health insurance rate',
-  'no_vehciles_perhousehold' = 'no vehicle household rate',
-  'HOUSEHOLD_SIZE' = 'household size',
-  'HOUSEHOLD_INCOME' = 'household income',
-  'BACHELOR_S_pp' = 'percent people own bachelor degrees',
-  'EstimatedAverageAge' = 'weighted averages age',
-  'BLACK_pp' = 'percent Black residents',
-  'HISPANIC_pp' = 'percent Hispanic residents',
-  'Glocery.Pharmacies_visits_weekly_pp' = 'Glocery.Pharmacies',
-  'Retails_visits_weekly_pp' ='Retails',
-  'Arts.Entertainment_visits_weekly_pp' = 'Arts.Entertainment',
-  'Restaurants.Bars_visits_weekly_pp' = 'Restaurants.Bars',
-  'Educations_visits_weekly_pp'= 'Educations',
-  'Healthcares_visits_weekly_pp'= 'Healthcares'
+visits_scores_wk <- visits_scores_wk %>%
+  rename(log_borough_case_count = 'borough_case_count_log', 
+         log_modzcta_case_count = 'COVID_CASE_COUNT_log',
+         log_NYC_death_count = 'DEATH_COUNT_log', 
+         temporal_discounting_score = 'regulated_scores_median',
+         loss_aversion_score = 'regulated_loss_median',
+         agency_score = 'regulated_agency_median',
+         stringency_index = 'StringencyIndex_WeightedAverage',
+         no_health_insurance_rate = 'NO_HEALTH_INSURANCE',
+         no_vehicle_household_rate = 'no_vehciles_perhousehold',
+         household_size = 'HOUSEHOLD_SIZE',
+         household_income = 'HOUSEHOLD_INCOME',
+         percent_people_own_bachelor_degrees  = 'BACHELORS_pp',
+         weighted_average_age = 'weighted_estimated_average_age_mean',
+         percent_Black_residents = 'BLACK_pp',
+         percent_Hispanic_residents  = 'HISPANIC_pp',
+         Glocery_and_Pharmacy  = 'Glocery.Pharmacies_visits_weekly_pp',
+         General_Retail  = 'Retails_visits_weekly_pp',
+         Art_and_Entertainment  = 'Arts.Entertainment_visits_weekly_pp',
+         Restaurant_and_Bar  = 'Restaurants.Bars_visits_weekly_pp',
+         Education  = 'Educations_visits_weekly_pp',
+         Healthcare = 'Healthcares_visits_weekly_pp'
   )
 
 
-dependent_var_list <- c('Glocery.Pharmacies_visits_weekly_pp', 'Retails_visits_weekly_pp', 
-                        'Arts.Entertainment_visits_weekly_pp', 'Restaurants.Bars_visits_weekly_pp',
-                        'Educations_visits_weekly_pp', 'Healthcares_visits_weekly_pp')
+name_display <- list('Glocery_and_Pharmacy' = 'Glocery/Pharmacy',
+                  'General_Retail' = 'General Retail',
+                   'Art_and_Entertainment' = 'Art/Entertainment',
+                   'Restaurant_and_Bar' = 'Restaurant/Bar',
+                    'Education'= 'Education',
+                    'Healthcare' = 'Healthcare'
+)
 
-independent_vars_smooth_base = c("week","borough_case_count_log")  #,'DEATH_COUNT_log'
-independent_vars_linear_base = c("regulated_scores_median","regulated_loss_median",'regulated_agency_median', 
-                            'StringencyIndex_WeightedAverage', "NO_HEALTH_INSURANCE","no_vehciles_perhousehold","HOUSEHOLD_SIZE", "HOUSEHOLD_INCOME", "BACHELOR_S_pp", "EstimatedAverageAge","BLACK_pp",
-                            "HISPANIC_pp") 
+
+dependent_var_list <- c('Glocery_and_Pharmacy', 'General_Retail', 
+                        'Art_and_Entertainment', 'Restaurant_and_Bar',
+                        'Education', 'Healthcare')
+
+independent_vars_smooth_base = c("week","log_borough_case_count")  #,'DEATH_COUNT_log'
+independent_vars_linear_base = c("temporal_discounting_score","loss_aversion_score",'agency_score', 
+                                 'stringency_index', "no_health_insurance_rate","no_vehicle_household_rate","household_size", "household_income", "percent_people_own_bachelor_degrees", 
+                                 "weighted_average_age","percent_Black_residents",
+                                 "percent_Hispanic_residents") 
 
 
 ##### plot the full gam model results ######
-plot_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_mapping_dep)
+plot_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display)
 
-###### combine the dependence plots ######
-png_files <- paste0(dependent_var_list, "_gam_model_plot.png")
+###### combine the ALL THE dependence plots ######
+png_files <- paste0("../results/", dependent_var_list, "_gam_model_plot.png")
 images <- list()
 
 # Read the images, with a check to ensure each file is successfully read
@@ -113,9 +152,8 @@ if (length(images) > 0) {
 }
 
 ##### only the score plots ######
-
 plot_scores(dependent_var_list)
-png_files <- paste0(dependent_var_list, "_score_plot.png")
+png_files <- paste0("../results/", dependent_var_list, "_score_plot.png")
 images <- list()
 
 # Read the images, with a check to ensure each file is successfully read
@@ -132,7 +170,7 @@ if (length(images) > 0) {
   combined_image <- image_append(image_join(images), stack = FALSE)
   
   # Save the combined image
-  image_write(combined_image, "../results/combined_image_scores.png")
+  image_write(combined_image, "../results/combined_image_scores_NEW.png")
 } else {
   warning("No images were read successfully.")
 }

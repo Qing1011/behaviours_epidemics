@@ -57,17 +57,17 @@ name_mapping_dep) {
     visits_scores_wk$predicted <- predictions
     
     # Plot true vs predicted
-    df <- visits_scores_wk[, c("week", "predicted", dependent_var, "zip_char")]
-    df_long <- melt(df, id.vars = c("week", "zip_char"))
+    df <- visits_scores_wk[, c("week", "predicted", dependent_var, "MODZCTA")]
+    df_long <- melt(df, id.vars = c("week", "MODZCTA"))
     
     color_mapping <- c(predicted = "red")
     color_mapping[dependent_var] <- "blue"
     
     p <- ggplot(df_long, aes(x = week, y = value, color = variable)) +
       geom_line() +
-      facet_wrap(~zip_char, scales = "free_y") +
+      facet_wrap(~MODZCTA, scales = "free_y") +
       theme_minimal() +
-      labs(title = paste("True vs Predicted Values by Zipcode for", dependent_var),
+      labs(title = paste("True vs Predicted Values by MODZCTA for", dependent_var),
            x = "Week", y = "Value") +
       scale_color_manual(values = color_mapping)
     
@@ -107,14 +107,14 @@ plot_zipcodes_for_multiple_vars <- function(data, selected_zipcodes, dependent_v
     color_mapping <- c(predicted = "red")
     color_mapping[dependent_var] <- "blue"
     # Filter data for selected zipcodes
-    data_selected <- data[data$zip_char %in% selected_zipcodes, ]
+    data_selected <- data[data$MODZCTA %in% selected_zipcodes, ]
     # Prepare data for plotting
-    df <- data_selected[, c("week", "predicted", dependent_var, "zip_char")]
-    df_long <- melt(df, id.vars = c("week", "zip_char"), variable.name = "variable", value.name = "value")
+    df <- data_selected[, c("week", "predicted", dependent_var, "MODZCTA")]
+    df_long <- melt(df, id.vars = c("week", "MODZCTA"), variable.name = "variable", value.name = "value")
     # Generate the plot for current dependent variable
     p <- ggplot(df_long, aes(x = week, y = value, color = variable)) +
       geom_line() +
-      facet_wrap(~zip_char, scales = "free_y", nrow = 4) +
+      facet_wrap(~MODZCTA, scales = "free_y", nrow = 4) +
       theme_minimal() +
       labs(x = "Week", y = "Visits per 100 populations") +
       scale_color_manual(values = color_mapping) +
