@@ -17,12 +17,15 @@ library(dplyr)
 source('999_2_regression_fun.R')
 
 ##### if have run summary please, skip this part #####
-visits_scores_wk <- read.csv('../data/unpivot_merged_data_raw.csv')
+visits_scores_wk <- read.csv('../data/unpivot_merged_data_raw_1to1.csv')
+#visits_scores_wk <- read.csv(file.choose())
 #### use one has been cleaned in 3.2
 mod_counts <- read.csv('../results/modzcta_zip_counts.csv')
-select_mod <- mod_counts[mod_counts$modzcta_count > 10, "MODZCTA"]
+select_mod <- mod_counts[mod_counts$modzcta_count > 15, "MODZCTA"]
 
 # Selecting subset where name is not in the list
+visits_scores_wk <- visits_scores_wk[!visits_scores_wk$MODZCTA %in% c(10004,10007,10005), ]
+# in the thresholds
 visits_scores_wk <- visits_scores_wk[visits_scores_wk$MODZCTA %in% select_mod, ]
 
 
@@ -32,12 +35,12 @@ columns_to_divide_100 <- c('Glocery.Pharmacies_visits_weekly', 'Retails_visits_w
                            'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
                            'Educations_visits_weekly', 'Healthcares_visits_weekly',
                            'others_visits_weekly')
-columns_to_divide <- c("weighted_Bachelor","weighted_Black","weighted_Hispanic",'weighted_no_health_insurance')
+#columns_to_divide <- c("weighted_Bachelor","weighted_Black","weighted_Hispanic",'weighted_no_health_insurance')
 
-#columns_to_divide <- c("BACHELORS","BLACK","HISPANIC")
+columns_to_divide <- c("BACHELORS","BLACK","HISPANIC")
 
-#divisor_column <- "POP_DENOMINATOR"
-divisor_column <- "weighted_Population"
+divisor_column <- "POP_DENOMINATOR"
+#divisor_column <- "weighted_Population"
 
 # Loop through each column to divide
 for (col in columns_to_divide_100) {
@@ -53,7 +56,7 @@ for (col in columns_to_divide) {
 #visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_scores_wk[["AREA"]]
 
 visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['weighted_No_vehicle']]/visits_scores_wk[['weighted_Households_num']]
-
+#visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['no_vehicles']]/visits_scores_wk[['household_num']]
 #####  used in the title #######
 visits_scores_wk <- visits_scores_wk %>%
   rename(log_borough_case_count = 'borough_case_count_log', 
@@ -81,8 +84,6 @@ visits_scores_wk <- visits_scores_wk %>%
 
 visits_scores_wk <- visits_scores_wk %>%
   rename(log_borough_case_count = 'borough_case_count_log', 
-         log_modzcta_case_count = 'COVID_CASE_COUNT_log',
-         log_NYC_death_count = 'DEATH_COUNT_log', 
          temporal_discounting_score = 'regulated_scores_median',
          loss_aversion_score = 'regulated_loss_median',
          agency_score = 'regulated_agency_median',
@@ -102,7 +103,8 @@ visits_scores_wk <- visits_scores_wk %>%
          Education  = 'Educations_visits_weekly_pp',
          Healthcare = 'Healthcares_visits_weekly_pp'
   )
-
+#         log_modzcta_case_count = 'COVID_CASE_COUNT_log',
+#log_NYC_death_count = 'DEATH_COUNT_log', 
 
 name_display <- list('Glocery_and_Pharmacy' = 'Glocery/Pharmacy',
                   'General_Retail' = 'General Retail',
@@ -117,11 +119,14 @@ dependent_var_list <- c('Glocery_and_Pharmacy', 'General_Retail',
                         'Art_and_Entertainment', 'Restaurant_and_Bar',
                         'Education', 'Healthcare')
 
-independent_vars_smooth_base = c("week","log_borough_case_count")  #,'DEATH_COUNT_log'
+independent_vars_smooth_base = c("week","log_borough_case_count")  #,'DEATH_COUNT_log' log_borough_case_count"
 independent_vars_linear_base = c("temporal_discounting_score","loss_aversion_score",'agency_score', 
-                                 'stringency_index', "no_health_insurance_rate","no_vehicle_household_rate","household_size", "household_income", "percent_people_own_bachelor_degrees", 
-                                 "weighted_average_age","percent_Black_residents",
-                                 "percent_Hispanic_residents") 
+                                 'stringency_index',"no_health_insurance_rate","no_vehicle_household_rate", "household_income", "percent_people_own_bachelor_degrees", 
+                                 "weighted_average_age")
+#, ,
+#"percent_Black_residents",
+#"percent_Hispanic_residents"
+#"household_size",
 
 
 ##### plot the full gam model results ######

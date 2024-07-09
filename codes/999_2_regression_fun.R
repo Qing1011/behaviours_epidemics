@@ -12,9 +12,8 @@ name_mapping_dep) {
     formula <- as.formula(paste(dependent_var, "~", smooth_parts, "+", linear_parts))
 
     # Fit the model
-    gam_model <- gam(formula, data = visits_scores_wk, family = gaussian(),method = "REML")
-
-
+    gam_model <- gam(formula, data = visits_scores_wk, family = gaussian(), method = "ML")
+    #scat(link="log")
 
     
     # Capture the model summary

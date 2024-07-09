@@ -6,14 +6,14 @@ library(tidyverse)
 library(data.table)
 
 census_api_key("919b37e63df029d1420900f893770f49d4a03226") #,install = TRUE
-v20 <- load_variables(2020, "acs5", cache = TRUE)
-View(v20)
-#write_csv(v20,'variable_namesv20.csv')
+v21 <- load_variables(2021, "acs5", cache = TRUE)
+View(v21)
+write_csv(v21,'../data/variable_namesv21.csv')
 
 # population: B25026_001, Estimate!!Total population in occupied housing units:
 #population <- get_acs(geography = 'tract', state = '36', survey = "acs5",
                       #variables = c(population = "B25026_001"), 
-                      #year = 2020)
+                      #year = 2021)
 
 #population <- population[,c('GEOID','estimate')]
 #setnames(population, c('estimate'), c('Population'))
@@ -27,19 +27,21 @@ race_group_popu <- c(
   'B01001D_001',
   'B01001E_001',
   'B01001F_001',
-  'B01001G_001'
+  'B01001G_001',
+  'B01001H_001'
 )
+#B01001A_001
 
 population <- get_acs(geography = 'tract', state = '36',
-                      variables = c(employment = 'B01001A_001'),
-                      year = 2020)
+                      variables = c(employment = 'B01001I_001'),
+                      year = 2021)
 population<- population[,c('GEOID','estimate')]
 
 for (a_i in race_group_popu)
 {
   population_temp <- get_acs(geography = 'tract', state = '36',
                              variables = c(population_temp = a_i),
-                             year = 2020)    
+                             year = 2021)    
   population_temp <- population_temp[,c('GEOID','estimate')]
   population$estimate <- population$estimate + population_temp$estimate
 }
@@ -52,7 +54,7 @@ setnames(population, c('estimate'), c('Population'))
 #B01001B_001 Estimate!!Total: SEX BY AGE (BLACK OR AFRICAN AMERICAN ALONE)
 black <- get_acs(geography = "tract", state = '36',
                  variables = c(black = "B02001_003"), 
-                 year = 2020)
+                 year = 2021)
 black <- black[,c('GEOID','estimate')]
 setnames(black, c('estimate'), c('Black'))
 
@@ -61,7 +63,7 @@ setnames(black, c('estimate'), c('Black'))
 # B03001_003, Estimate!!Total:!!SEX BY AGE (HISPANIC OR LATINO)
 hispanic <- get_acs(geography = "tract", state = '36',
                     variables = c(hispanic = "B01001I_001"), 
-                    year = 2020)
+                    year = 2021)
 
 hispanic <- hispanic[,c('GEOID','estimate')]
 setnames(hispanic, c('estimate'), c('Hispanic'))
@@ -70,10 +72,10 @@ setnames(hispanic, c('estimate'), c('Hispanic'))
 ###############*******################
 #median household income
 # Estimate!!Total:
-#householdincome: MEDIAN HOUSEHOLD INCOME IN THE PAST 12 MONTHS (IN 2020 INFLATION-ADJUSTED DOLLARS) BY HOUSEHOLD SIZE
+#householdincome: MEDIAN HOUSEHOLD INCOME IN THE PAST 12 MONTHS (IN 2021 INFLATION-ADJUSTED DOLLARS) BY HOUSEHOLD SIZE
 householdincome <- get_acs(geography = "tract", state = '36',
                            variables = c(householdincome = "B19019_001"), 
-                           year = 2020)
+                           year = 2021)
 householdincome <- householdincome[,c('GEOID','estimate')]
 setnames(householdincome, c('estimate'), c('Householdincome'))
 
@@ -82,18 +84,39 @@ setnames(householdincome, c('estimate'), c('Householdincome'))
 #bachelor: B06009_005, Estimate!!Total:!!Bachelor's degree
 bachelor <- get_acs(geography = "tract", state = '36',
                     variables = c(bachelor = "B06009_005"), 
-                    year = 2020)
+                    year = 2021)
 bachelor <- bachelor[,c('GEOID','estimate')]
 setnames(bachelor, c('estimate'), c('Bachelor'))
 
 ###############*******################
-#household num
-households <- get_acs(geography = "tract", state = '36',
-                      variables = c(households_num = "B08202_001"), 
-                      year = 2020)
+#household num: HOUSEHOLD SIZE BY VEHICLES AVAILABLE
+household_num <- get_acs(geography = "block group", state = 'NY',
+                      variables = c(households_num = "B11001_001"), 
+                      year = 2021)
 
-households <- households[,c('GEOID','estimate')]
-setnames(households, c('estimate'), c('Households_num'))
+
+household_num <- household_num[,c('GEOID','estimate')]
+setnames(household_num, c('estimate'), c('Household_num'))
+###### this is 12 digits ####
+####aggrated into 11 digits####
+household_num$tract <- substr(household_num$GEOID, 1, 11)
+# take the mean value of all the block group as the value of the tract.
+household_num <- household_num %>%
+  group_by(tract) %>%
+  summarise(mean_householdnum = mean(Household_num, na.rm = TRUE))%>%
+  rename(GEOID = tract)
+# fill the na value with 0 
+household_num$mean_householdnum[is.na(householdsize_num$mean_householdnum)] <- 0
+
+
+###############*******################
+#household size: HOUSEHOLD SIZE BY VEHICLES AVAILABLE
+household_size <- get_acs(geography = "tract", state = '36',
+                      variables = c(households_num = "B08201_001"), 
+                      year = 2021)
+
+household_size <- household_size[,c('GEOID','estimate')]
+setnames(household_size, c('estimate'), c('Householdsize'))
 
 ###############*******################
 #vehicles owned
@@ -101,362 +124,34 @@ setnames(households, c('estimate'), c('Households_num'))
 #### by occupied housing units
 no_vehicle <- get_acs(geography = "tract", state = '36',
                       variables = c(no_vehicle = "B08201_002"), 
-                      year = 2020)
+                      year = 2021)
 
 no_vehicle <- no_vehicle[,c('GEOID','estimate')]
 setnames(no_vehicle, c('estimate'), c('No_vehicle'))
 
 
 #############********################
+rows_with_no_insurance <- v21[grep("No health insurance coverage", v21$label), ]
+sub_no_insurance <- rows_with_no_insurance[rows_with_no_insurance$concept == "HEALTH INSURANCE COVERAGE STATUS BY SEX BY AGE",]
+nohealthinsurance_groups <- sub_no_insurance$name
+
 health_insurance <- get_acs(geography = "tract", state = '36',
-                      variables = c(health_insurance = "B27001_001"), 
-                      year = 2020)
+                      variables = c(health_insurance = "B27001_005"), 
+                      year = 2021)
 health_insurance <- health_insurance[,c('GEOID','estimate')]
-setnames(health_insurance, c('estimate'), c('health_insurance'))
 
-###############*******################
-# age groups
-### ageunder5
-ageunder5_groups <- c(
-  'B01001A_018',
-  'B01001B_003',
-  'B01001B_018',
-  'B01001C_003',
-  'B01001C_018',
-  'B01001D_003',
-  'B01001D_018',
-  'B01001E_003',
-  'B01001E_018',
-  'B01001F_003',
-  'B01001F_018',
-  'B01001G_003',
-  'B01001G_018'
-)
-ageunder5 <- get_acs(geography = 'tract', state = '36',
-                     variables = c(ageunder5 = "B01001A_003"),
-                     year = 2020)
-ageunder5 <- ageunder5[,c('GEOID','estimate')]
-
-for (g in ageunder5_groups)
+for (a_i in nohealthinsurance_groups[2:18])
 {
-  ageunder5_temp <- get_acs(geography = 'tract', state = '36',
-                            variables = c(ageunder5_temp = g),
-                            year = 2020)    
-  ageunder5_temp <- ageunder5_temp[,c('GEOID','estimate')]
-  ageunder5$estimate <- ageunder5$estimate + ageunder5_temp$estimate
+  insurance_temp <- get_acs(geography = 'tract', state = '36',
+                             variables = c(population_temp = a_i),
+                             year = 2021)    
+  insurance_temp <- insurance_temp[,c('GEOID','estimate')]
+  health_insurance$estimate <- health_insurance$estimate + insurance_temp$estimate
 }
-setnames(ageunder5, c('estimate'), c('Ageunder5'))
 
-##age5to9
-age5to9_groups <- c(
-  'B01001A_019',
-  'B01001B_004',
-  'B01001B_019',
-  'B01001C_004',
-  'B01001C_019',
-  'B01001D_004',
-  'B01001D_019',
-  'B01001E_004',
-  'B01001E_019',
-  'B01001F_004',
-  'B01001F_019',
-  'B01001G_004',
-  'B01001G_019'
-)
-age5to9 <- get_acs(geography = 'tract', state = '36',
-                   variables = c(age5to9 = "B01001A_004"),
-                   
-                   year = 2020)
-age5to9 <- age5to9[,c('GEOID','estimate')]
-for (g in age5to9_groups)
-{
-  age5to9_temp <- get_acs(geography = 'tract', state = '36',
-                          variables = c(age5to9_temp = g),
-                          
-                          year = 2020)    
-  age5to9_temp <- age5to9_temp[,c('GEOID','estimate')]
-  age5to9$estimate <- age5to9$estimate + age5to9_temp$estimate
-}
-setnames(age5to9, c('estimate'), c('Age5to9'))
+setnames(health_insurance, c('estimate'), c('no_health_insurance'))
 
-age10to14_groups <- c(
-  'B01001A_020',
-  'B01001B_005',
-  'B01001B_020',
-  'B01001C_005',
-  'B01001C_020',
-  'B01001D_005',
-  'B01001D_020',
-  'B01001E_005',
-  'B01001E_020',
-  'B01001F_005',
-  'B01001F_020',
-  'B01001G_005',
-  'B01001G_020'
-)
-age10to14 <- get_acs(geography = 'tract', state = '36',
-                     variables = c(age10to14 = 'B01001A_005'),
-                     
-                     year = 2020)
-age10to14 <- age10to14[,c('GEOID','estimate')]
-for (g in age10to14_groups)
-{
-  age10to14_temp <- get_acs(geography = 'tract', state = '36',
-                            variables = c(age10to14_temp = g),
-                            
-                            year = 2020)    
-  age10to14_temp <- age10to14_temp[,c('GEOID','estimate')]
-  age10to14$estimate <- age10to14$estimate + age10to14_temp$estimate
-}
-setnames(age10to14, c('estimate'), c('Age10to14'))
-
-age15to24_groups <- c(
-  'B01001A_021',
-  'B01001B_006',
-  'B01001B_021',
-  'B01001C_006',
-  'B01001C_021',
-  'B01001D_006',
-  'B01001D_021',
-  'B01001E_006',
-  'B01001E_021',
-  'B01001F_006',
-  'B01001F_021',
-  'B01001G_006',
-  'B01001G_021',
-  'B01001A_007',
-  'B01001A_022',
-  'B01001B_007',
-  'B01001B_022',
-  'B01001C_007',
-  'B01001C_022',
-  'B01001D_007',
-  'B01001D_022',
-  'B01001E_007',
-  'B01001E_022',
-  'B01001F_007',
-  'B01001F_022',
-  'B01001G_007',
-  'B01001G_022',
-  'B01001A_008',
-  'B01001A_023',
-  'B01001B_008',
-  'B01001B_023',
-  'B01001C_008',
-  'B01001C_023',
-  'B01001D_008',
-  'B01001D_023',
-  'B01001E_008',
-  'B01001E_023',
-  'B01001F_008',
-  'B01001F_023',
-  'B01001G_008',
-  'B01001G_023')
-
-age15to24 <- get_acs(geography = 'tract', state = '36',
-                     variables = c(age15to24 = 'B01001A_006'), #'B01001A_006' is the first group of age15to24
-                     year = 2020)
-age15to24 <- age15to24[,c('GEOID','estimate')]
-for (g in age15to24_groups)
-{
-  age15to24_temp <- get_acs(geography = 'tract', state = '36',
-                            variables = c(age15to24_temp = g),
-                            year = 2020)    
-  age15to24_temp <- age15to24_temp[,c('GEOID','estimate')]
-  age15to24$estimate <- age15to24$estimate + age15to24_temp$estimate
-}
-setnames(age15to24, c('estimate'), c('Age15to24'))
-
-age25to44_groups <- c(
-  'B01001A_024',
-  'B01001B_009',
-  'B01001B_024',
-  'B01001C_009',
-  'B01001C_024',
-  'B01001D_009',
-  'B01001D_024',
-  'B01001E_009',
-  'B01001E_024',
-  'B01001F_009',
-  'B01001F_024',
-  'B01001G_009',
-  'B01001G_024',
-  'B01001A_010',
-  'B01001A_025',
-  'B01001B_010',
-  'B01001B_025',
-  'B01001C_010',
-  'B01001C_025',
-  'B01001D_010',
-  'B01001D_025',
-  'B01001E_010',
-  'B01001E_025',
-  'B01001F_010',
-  'B01001F_025',
-  'B01001G_010',
-  'B01001G_025',
-  'B01001A_011',
-  'B01001A_026',
-  'B01001B_011',
-  'B01001B_026',
-  'B01001C_011',
-  'B01001C_026',
-  'B01001D_011',
-  'B01001D_026',
-  'B01001E_011',
-  'B01001E_026',
-  'B01001F_011',
-  'B01001F_026',
-  'B01001G_011',
-  'B01001G_026'
-)
-age25to44 <- get_acs(geography = 'tract', state = '36',
-                     variables = c(age25to44 = 'B01001A_009'), #'B01001A_009' is the first group of age25to44
-                     year = 2020)
-age25to44 <- age25to44[,c('GEOID','estimate')]
-for (g in age25to44_groups)
-{
-  age25to44_temp <- get_acs(geography = 'tract', state = '36',
-                            variables = c(age25to44_temp = g),
-                            year = 2020)    
-  age25to44_temp <- age25to44_temp[,c('GEOID','estimate')]
-  age25to44$estimate <- age25to44$estimate + age25to44_temp$estimate
-}
-setnames(age25to44, c('estimate'), c('Age25to44'))
-
-age45to64_groups<-c(
-  'B01001A_013',
-  'B01001A_027',
-  'B01001A_028',
-  'B01001B_012',
-  'B01001B_013',
-  'B01001B_027',
-  'B01001B_028',
-  'B01001C_012',
-  'B01001C_013',
-  'B01001C_027',
-  'B01001C_028',
-  'B01001D_012',
-  'B01001D_013',
-  'B01001D_027',
-  'B01001D_028',
-  'B01001E_012',
-  'B01001E_013',
-  'B01001E_027',
-  'B01001E_028',
-  'B01001F_012',
-  'B01001F_013',
-  'B01001F_027',
-  'B01001F_028',
-  'B01001G_012',
-  'B01001G_013',
-  'B01001G_027',
-  'B01001G_028'
-)
-age45to64 <- get_acs(geography = 'tract', state = '36',
-                     variables = c(age45to64 = 'B01001A_012'), #'B01001A_012' is the first group of age45to64
-                     year = 2020)
-age45to64 <- age45to64[,c('GEOID','estimate')]
-for (g in age45to64_groups)
-{
-  age45to64_temp <- get_acs(geography = 'tract', state = '36',
-                            variables = c(age45to64_temp = g),
-                            year = 2020)    
-  age45to64_temp <- age45to64_temp[,c('GEOID','estimate')]
-  age45to64$estimate <- age45to64$estimate + age45to64_temp$estimate
-}
-setnames(age45to64, c('estimate'), c('Age45to64'))
-
-age65to74_groups <- c(
-  'B01001A_029',
-  'B01001B_014',
-  'B01001B_029',
-  'B01001C_014',
-  'B01001C_029',
-  'B01001D_014',
-  'B01001D_029',
-  'B01001E_014',
-  'B01001E_029',
-  'B01001F_014',
-  'B01001F_029',
-  'B01001G_014',
-  'B01001G_029'
-)
-age65to74 <- get_acs(geography = 'tract', state = '36',
-                     variables = c(age65to74 = 'B01001A_014'), #'B01001A_014' is the first group of age65to74
-                     year = 2020)
-age65to74 <- age65to74[,c('GEOID','estimate')]
-for (g in age65to74_groups)
-{
-  age65to74_temp <- get_acs(geography = 'tract', state = '36',
-                            variables = c(age65to74_temp = g),
-                            year = 2020)    
-  age65to74_temp <- age65to74_temp[,c('GEOID','estimate')]
-  age65to74$estimate <- age65to74$estimate + age65to74_temp$estimate
-}
-setnames(age65to74, c('estimate'), c('Age65to74'))
-
-age75plus_groups<-c(
-  'B01001A_016',
-  'B01001A_030',
-  'B01001A_031',
-  'B01001B_015',
-  'B01001B_016',
-  'B01001B_030',
-  'B01001B_031',
-  'B01001C_015',
-  'B01001C_016',
-  'B01001C_030',
-  'B01001C_031',
-  'B01001D_015',
-  'B01001D_016',
-  'B01001D_030',
-  'B01001D_031',
-  'B01001E_015',
-  'B01001E_016',
-  'B01001E_030',
-  'B01001E_031',
-  'B01001F_015',
-  'B01001F_016',
-  'B01001F_030',
-  'B01001F_031',
-  'B01001G_015',
-  'B01001G_016',
-  'B01001G_030',
-  'B01001G_031'
-)
-age75plus <- get_acs(geography = 'tract', state = '36',
-                     variables = c(age75plus = 'B01001A_015'), #'B01001A_015' is the first group of age75plus
-                     year = 2020)
-age75plus <- age75plus[,c('GEOID','estimate')]
-for (g in age75plus_groups)
-{
-  age75plus_temp <- get_acs(geography = 'tract', state = '36',
-                            variables = c(age75plus_temp = g),
-                            year = 2020)    
-  age75plus_temp <- age75plus_temp[,c('GEOID','estimate')]
-  age75plus$estimate <- age75plus$estimate + age75plus_temp$estimate
-}
-setnames(age75plus, c('estimate'), c('Age75plus'))
 #############********################
-#householdsize: B25010_001, Estimate!!Average household size --!!Total:
-householdsize <- get_acs(geography = "block group", 
-                    variables = c(householdsize = "B25010_001"), 
-                    state = "NY", 
-                    year = 2020)
-householdsize <- householdsize[,c('GEOID','estimate')]
-setnames(householdsize, c('estimate'), c('Householdsize'))
-###### this is 12 digits ####
-####aggrated into 11 digits####
-householdsize$tract <- substr(householdsize$GEOID, 1, 11)
-# take the mean value of all the block group as the value of the tract.
-householdsize_f <- householdsize %>%
-  group_by(tract) %>%
-  summarise(mean_householdsize = mean(Householdsize, na.rm = TRUE))%>%
-  rename(GEOID = tract)
-# fill the na value with 0 
-householdsize_f$mean_householdsize[is.na(householdsize_f$mean_householdsize)] <- 0
-##############***************###################
 
 #combine
 zipcodedataNY <- population
@@ -466,7 +161,7 @@ zipcodedataNY <- merge(zipcodedataNY, hispanic, by="GEOID")
 
 zipcodedataNY <- merge(zipcodedataNY, householdincome, by="GEOID")
 zipcodedataNY <- merge(zipcodedataNY, bachelor, by="GEOID")
-zipcodedataNY <- merge(zipcodedataNY, households, by="GEOID")
+zipcodedataNY <- merge(zipcodedataNY, household_num, by="GEOID")
 
 zipcodedataNY <- merge(zipcodedataNY, ageunder5, by="GEOID")
 zipcodedataNY <- merge(zipcodedataNY, age5to9, by="GEOID")
@@ -481,7 +176,7 @@ zipcodedataNY <- merge(zipcodedataNY, age75plus, by="GEOID")
 zipcodedataNY <- merge(zipcodedataNY, no_vehicle, by="GEOID")
 zipcodedataNY <- merge(zipcodedataNY, health_insurance, by="GEOID")
 
-zipcodedataNY <- merge(zipcodedataNY, householdsize_f, by="GEOID")
+zipcodedataNY <- merge(zipcodedataNY, household_size, by="GEOID")
 
-fileName = c('../data/tract_data2020.csv')
+fileName = c('../data/tract_data2021.csv')
 write.csv(zipcodedataNY, file = fileName, row.names=FALSE)
