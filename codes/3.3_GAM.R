@@ -17,7 +17,7 @@ library(dplyr)
 source('999_2_regression_fun.R')
 
 ##### if have run summary please, skip this part #####
-visits_scores_wk <- read.csv('../data/unpivot_merged_data_raw_1to1.csv')
+visits_scores_wk <- read.csv('../data/unpivot_merged_data_raw_loss_visitor.csv')
 #visits_scores_wk <- read.csv(file.choose())
 #### use one has been cleaned in 3.2
 mod_counts <- read.csv('../results/modzcta_zip_counts.csv')
@@ -35,12 +35,12 @@ columns_to_divide_100 <- c('Glocery.Pharmacies_visits_weekly', 'Retails_visits_w
                            'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
                            'Educations_visits_weekly', 'Healthcares_visits_weekly',
                            'others_visits_weekly')
-#columns_to_divide <- c("weighted_Bachelor","weighted_Black","weighted_Hispanic",'weighted_no_health_insurance')
+columns_to_divide <- c("Bachelor",'No_health_insurance')
 
-columns_to_divide <- c("BACHELORS","BLACK","HISPANIC")
+#columns_to_divide <- c("BACHELORS","BLACK","HISPANIC")
 
-divisor_column <- "POP_DENOMINATOR"
-#divisor_column <- "weighted_Population"
+#divisor_column <- "POP_DENOMINATOR"
+divisor_column <- "Population"
 
 # Loop through each column to divide
 for (col in columns_to_divide_100) {
@@ -55,25 +55,22 @@ for (col in columns_to_divide) {
 }
 #visits_scores_wk[["density"]] <- visits_scores_wk[[divisor_column]]/visits_scores_wk[["AREA"]]
 
-visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['weighted_No_vehicle']]/visits_scores_wk[['weighted_Households_num']]
-#visits_scores_wk[['no_vehciles_perhousehold']] <- visits_scores_wk[['no_vehicles']]/visits_scores_wk[['household_num']]
+#visits_scores_wk[['No_vehciles_perhousehold']] <- visits_scores_wk[['No_vehicles']]/visits_scores_wk[['Households_num']]
+visits_scores_wk[['No_vehciles_perhousehold']] <- visits_scores_wk[['No_vehicles']]/visits_scores_wk[['Household_num']]
 #####  used in the title #######
 visits_scores_wk <- visits_scores_wk %>%
   rename(log_borough_case_count = 'borough_case_count_log', 
-         log_modzcta_case_count = 'COVID_CASE_COUNT_log',
-         log_NYC_death_count = 'DEATH_COUNT_log', 
+         #log_modzcta_case_count = 'COVID_CASE_COUNT_log',
+         #log_NYC_death_count = 'DEATH_COUNT_log', 
          temporal_discounting_score = 'regulated_scores_median',
          loss_aversion_score = 'regulated_loss_median',
          agency_score = 'regulated_agency_median',
          stringency_index = 'StringencyIndex_WeightedAverage',
-         no_health_insurance_rate = 'weighted_no_health_insurance_pp',
-         no_vehicle_household_rate = 'no_vehciles_perhousehold',
-         household_size = 'weighted_household_size_mean',
-         household_income = 'weighted_household_income_mean',
-         percent_people_own_bachelor_degrees  = 'weighted_Bachelor_pp',
-         weighted_average_age = 'weighted_estimated_average_age_mean',
-         percent_Black_residents = 'weighted_Black_pp',
-         percent_Hispanic_residents  = 'weighted_Hispanic_pp',
+         no_health_insurance_rate = 'No_health_insurance_pp',
+         no_vehicle_household_rate = 'No_vehciles_perhousehold',
+         household_income = 'Household_income',
+         percent_people_own_bachelor_degrees  = 'Bachelor_pp',
+         weighted_average_age = 'weighted_estimated_average_age',
          Glocery_and_Pharmacy  = 'Glocery.Pharmacies_visits_weekly_pp',
          General_Retail  = 'Retails_visits_weekly_pp',
          Art_and_Entertainment  = 'Arts.Entertainment_visits_weekly_pp',
@@ -82,29 +79,7 @@ visits_scores_wk <- visits_scores_wk %>%
          Healthcare = 'Healthcares_visits_weekly_pp'
 )
 
-visits_scores_wk <- visits_scores_wk %>%
-  rename(log_borough_case_count = 'borough_case_count_log', 
-         temporal_discounting_score = 'regulated_scores_median',
-         loss_aversion_score = 'regulated_loss_median',
-         agency_score = 'regulated_agency_median',
-         stringency_index = 'StringencyIndex_WeightedAverage',
-         no_health_insurance_rate = 'NO_HEALTH_INSURANCE',
-         no_vehicle_household_rate = 'no_vehciles_perhousehold',
-         household_size = 'HOUSEHOLD_SIZE',
-         household_income = 'HOUSEHOLD_INCOME',
-         percent_people_own_bachelor_degrees  = 'BACHELORS_pp',
-         weighted_average_age = 'weighted_estimated_average_age_mean',
-         percent_Black_residents = 'BLACK_pp',
-         percent_Hispanic_residents  = 'HISPANIC_pp',
-         Glocery_and_Pharmacy  = 'Glocery.Pharmacies_visits_weekly_pp',
-         General_Retail  = 'Retails_visits_weekly_pp',
-         Art_and_Entertainment  = 'Arts.Entertainment_visits_weekly_pp',
-         Restaurant_and_Bar  = 'Restaurants.Bars_visits_weekly_pp',
-         Education  = 'Educations_visits_weekly_pp',
-         Healthcare = 'Healthcares_visits_weekly_pp'
-  )
-#         log_modzcta_case_count = 'COVID_CASE_COUNT_log',
-#log_NYC_death_count = 'DEATH_COUNT_log', 
+
 
 name_display <- list('Glocery_and_Pharmacy' = 'Glocery/Pharmacy',
                   'General_Retail' = 'General Retail',
