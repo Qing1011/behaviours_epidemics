@@ -5,7 +5,7 @@
 #dat_lossgain <- dat %>% current we are not using the masking and indoor data
  # dplyr::select(ResponseId, loss_gain_1:loss_loss_3, mask_march2020:mask_winter2020, indoor_march2020:indoor_winter2020 )
 dat_lossgain <- dat %>%
-  dplyr::select(ResponseId, loss_gain_1:loss_loss_3)
+  dplyr::select(ResponseId, zipcode, loss_gain_1:loss_loss_3)
 # there is one id R_3CKphd7v4L4nZVw who did not finish the questions, 
 # we need to delete it from the whole sample # down to 1348
 dat_lossgain <- na.omit(dat_lossgain)  

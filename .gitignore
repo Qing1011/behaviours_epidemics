@@ -286,4 +286,5 @@ TSWLatexianTemp*
 
 *.txt
 *.pt
-
+# result folders
+results/**

@@ -1,5 +1,5 @@
 plot_gam_models <- function(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, 
-name_mapping_dep) {
+name_mapping_dep, sub_dir) {
     for (dependent_var in dependent_var_list) {
     # Construct the formula
     
@@ -12,30 +12,33 @@ name_mapping_dep) {
     formula <- as.formula(paste(dependent_var, "~", smooth_parts, "+", linear_parts))
 
     # Fit the model
-    gam_model <- gam(formula, data = visits_scores_wk, family = gaussian(), method = "ML")
-    #scat(link="log")
+    gam_model <- gam(formula, data = visits_scores_wk, family = Gamma(link='log'), method = "ML")
+    #scat(link="log") #gaussian() #Gamma
 
     
     # Capture the model summary
     sum_my_model <- summary(gam_model)
     model_summary <- capture.output(sum_my_model)
 
-    summary_file_name <- paste0("../results/", dependent_var, "_model_summary.txt")
+    summary_file_name <- paste0("../results/", sub_dir, dependent_var, "_model_summary.txt")
     writeLines(model_summary, summary_file_name)
         ###save the model 
-    # check_file_name <- paste0(dependent_var, "gam_check_plot_%03d.png")
-    # png(check_file_name, width = 800, height = 400, res = 300)
-    check_file_name <- paste0("../results/", dependent_var, "gam_check_plots.pdf")
-    pdf(check_file_name, width = 5, height = 4)
+
+    #check_file_name <- paste0("../results/", sub_dir, dependent_var, "gam_check_plots.pdf")
+    #pdf(check_file_name, width = 5, height = 4)
+    check_file_name <- paste0("../results/", sub_dir, dependent_var, "_gam_check_plots.png")
+    png(check_file_name, width = 16, height = 4, units = "in", res = 300)
+    par(mfrow = c(1, 4),oma = c(0, 0, 2, 0))
     gam.check(gam_model)
+    mtext(dependent_var, outer = TRUE, cex = 1.5)
     dev.off()
 
-    file_name_model <- paste0("../results/", dependent_var, "_gam_model.RData")
+    file_name_model <- paste0("../results/", sub_dir, dependent_var, "_gam_model.RData")
     save(gam_model, file = file_name_model)
    
     # Prepare for plotting
     num_terms <- length(c(independent_vars_smooth, independent_vars_linear))
-    file_name <- paste0("../results/", dependent_var, "_gam_model_plot.png")
+    file_name <- paste0("../results/", sub_dir, dependent_var, "_gam_model_plot.png")
     png(file_name, width = 800, height = num_terms * 400, res = 300)
     ##### title plot ####
     par(mfrow=c(num_terms+1, 1))
@@ -57,6 +60,7 @@ name_mapping_dep) {
     
     # Plot true vs predicted
     df <- visits_scores_wk[, c("week", "predicted", dependent_var, "MODZCTA")]
+    
     df_long <- melt(df, id.vars = c("week", "MODZCTA"))
     
     color_mapping <- c(predicted = "red")
@@ -70,39 +74,24 @@ name_mapping_dep) {
            x = "Week", y = "Value") +
       scale_color_manual(values = color_mapping)
     
-    ggsave(paste0("../results/", dependent_var, "_true_vs_predicted.png"), plot = p, width = 10, height = 8)
+    ggsave(paste0("../results/", sub_dir, dependent_var, "_true_vs_predicted.png"), plot = p, width = 10, height = 8)
     }
 }   
 
 
-plot_scores<-function(dependent_var_list,independent_vars_linear_base,data){
+plot_scores<-function(dependent_var_list,independent_vars_linear_base,sub_dir){
   for (dependent_var in dependent_var_list) {
     # Read the images, with a check to ensure each file is successfully read
-    file_name <- paste0("../results/", dependent_var, "_gam_model.RData")
+    file_name <- paste0("../results/", sub_dir, dependent_var, "_gam_model.RData")
     load(file_name)
-    save_name <- paste0("../results/", dependent_var, "_score_plot.png")
+    save_name <- paste0("../results/", sub_dir, dependent_var, "_score_plot.png")
     png(save_name, width = 700, height = 1600, res = 300)
     ##### title plot ####
     par(mfrow=c(3, 1))
     par(mar=c(4, 2, 1, 1))
-    for(i in 1:3) {
+    for(i in 3:5) {
       term_name <- independent_vars_linear_base[i]
-      # plot(gam_model, select = i, all.terms = TRUE, main = "")
-      x <- data$term_name
-      pred_data <- with(data, data.frame(x = seq(0, 100, length.out = 200)))
-      pred_data$fit <- predict(gam_model, type = "response",new_)
-      ci <- predict(gam_model, type = "terms", se.fit = TRUE)
-
-      # Calculate upper and lower bounds of confidence intervals
-      ## 95% confidence interval
-      pred_data$upper <- pred_data$fit + 1.96 * ci$se.fit
-      pred_data$lower <- pred_data$fit - 1.96 * ci$se.fit
-
-      ggplot(pred_data, aes(x = x)) +
-      geom_line(aes(y = fit), color = "black") +
-      geom_ribbon(aes(ymin = lower, ymax = upper), fill = "blue", alpha = 0.2) +
-      labs(title = "Linear Term with Confidence Interval", x = "X", y = "Effect") +
-      theme_minimal()
+      plot(gam_model, select = i, all.terms = TRUE, main = "")
     }
     dev.off()
   }
@@ -110,11 +99,11 @@ plot_scores<-function(dependent_var_list,independent_vars_linear_base,data){
 #shade = TRUE, shade.col = "blue",
 
 
-plot_zipcodes_for_multiple_vars <- function(data, selected_zipcodes, dependent_var_list) {
+plot_zipcodes_for_multiple_vars <- function(data, selected_zipcodes, dependent_var_list,sub_dir) {
   plots <- list() # List to store each plot
   for (dependent_var in dependent_var_list) {
     # Read the images, with a check to ensure each file is successfully read
-    file_name <- paste0("../results/", dependent_var, "_gam_model.RData")
+    file_name <- paste0("../results/", sub_dir, dependent_var, "_gam_model.RData")
     load(file_name)
   # Generate predictions only once for efficiency
     predictions <- predict(gam_model, newdata = data, type = "response")
@@ -146,7 +135,7 @@ plot_zipcodes_for_multiple_vars <- function(data, selected_zipcodes, dependent_v
   # Combine all plots into a single figure with 4 rows and 6 columns
   combined_plot <- marrangeGrob(plots, nrow = 1, ncol = 6)
   
-  
   # Save the combined plot to a PDF file
-  ggsave("../results/combined_true_vs_predicted.png", combined_plot, width = 7, height = 4.5, device = 'png')
+  image_name <- paste0("../results/", sub_dir, "combined_true_vs_predicted.png")
+  ggsave(image_name, combined_plot, width = 7, height = 4.5, device = 'png')
 }
