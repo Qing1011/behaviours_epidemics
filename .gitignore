@@ -288,3 +288,13 @@ TSWLatexianTemp*
 *.pt
 # result folders
 results/**
+!results/**/.gitignore
+
+results/random_forest/*
+!results/random_forest/
+# results/gam_model_1to1/*
+# results/gam_model_1tomore/*
+# results/gam_model_loss_visitors/*
+# results/plots_maps/*
+
+
