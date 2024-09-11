@@ -8,7 +8,7 @@ v21 <- load_variables(2021, "acs5", cache = TRUE)
 View(v21)
 write_csv(v21,'../data/variable_namesv21.csv')
 
-mod_counts <- read.csv('../results/modzcta_zip_counts.csv')
+mod_counts <- read.csv('../results/counts/modzcta_zip_counts.csv')
 select_zcta <- mod_counts[mod_counts$modzcta_count > 15, "ZCTA"]
 zcta_ls <- select_zcta[!select_zcta %in% c(10004,10007,10005,10271)]
 
