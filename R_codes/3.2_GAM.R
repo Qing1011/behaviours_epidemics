@@ -3,6 +3,7 @@ if (!requireNamespace("reshape2", quietly = TRUE)) install.packages("reshape2")
 if (!requireNamespace("openxlsx", quietly = TRUE)) install.packages("openxlsx")
 if (!requireNamespace("magick", quietly = TRUE)) install.packages("magick")
 if (!requireNamespace("dlnm", quietly = TRUE)) install.packages("dlnm")
+install.packages("pdp")
 
 library(openxlsx)
 library(mgcv)
@@ -13,8 +14,13 @@ library(magick)
 library(dlnm)
 library(gridExtra)
 library(dplyr)
+library(pdp)
+library(broom)
+library(lmtest)
 
-source('999_2_regression_fun.R')
+
+
+source('999_2_regression_fun_v2.R')
 
 ##### if have run summary please, skip this part #####
 visits_scores_wk <- read.csv('../data/unpivot_merged_data_raw_1to1_s.csv')
@@ -24,10 +30,13 @@ subfolder_n <- c('/gam_model_1to1/') #loss_visitors
 
 # Define the columns you want to divide
 # The column to divide by
-columns_to_divide_100 <- c('Glocery.Pharmacies_visits_weekly', 'Retails_visits_weekly', 
+columns_to_divide_100 <- c('Grocery.Pharmacies_visits_weekly', 'Retails_visits_weekly', 
                            'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
                            'Educations_visits_weekly', 'Healthcares_visits_weekly',
-                           'others_visits_weekly')
+                           'others_visits_weekly','Grocery.Pharmacies_visits_weekly_lag1', 'Retails_visits_weekly_lag1', 
+                           'Arts.Entertainment_visits_weekly_lag1', 'Restaurants.Bars_visits_weekly_lag1',
+                           'Educations_visits_weekly_lag1', 'Healthcares_visits_weekly_lag1',
+                           'others_visits_weekly_lag1')
 columns_to_divide <- c("Bachelor",'No_health_insurance')
 
 divisor_column <- "Population"
@@ -47,24 +56,26 @@ visits_scores_wk[['No_vehciles_perhousehold']] <- visits_scores_wk[['No_vehicles
 #####  used in the title #######
 visits_scores_wk <- visits_scores_wk %>%
   rename(log_borough_case_count = 'borough_case_count_log', 
-         temporal_discounting_score = 'regulated_tdscores_median',
-         loss_aversion_score = 'regulated_loss_median',
-         agency_score = 'regulated_agency_median',
+         temporal_discounting_score = 'regulated_tdscores_mode', #median
+         loss_aversion_score = 'regulated_loss_mode', #
+         agency_score = 'regulated_agency_mode',#
          stringency_index = 'StringencyIndex_WeightedAverage',
          no_health_insurance_rate = 'No_health_insurance_pp',
          no_vehicle_household_rate = 'No_vehciles_perhousehold',
          household_income = 'Household_income',
          percent_people_own_bachelor_degrees  = 'Bachelor_pp',
          weighted_average_age = 'weighted_estimated_average_age',
-         Glocery_and_Pharmacy  = 'Glocery.Pharmacies_visits_weekly_pp',
+         Grocery_and_Pharmacy  = 'Grocery.Pharmacies_visits_weekly_pp',
          General_Retail  = 'Retails_visits_weekly_pp',
          Art_and_Entertainment  = 'Arts.Entertainment_visits_weekly_pp',
          Restaurant_and_Bar  = 'Restaurants.Bars_visits_weekly_pp',
          Education  = 'Educations_visits_weekly_pp',
-         Healthcare = 'Healthcares_visits_weekly_pp'
+         Healthcare = 'Healthcares_visits_weekly_pp',
+         longitude = 'longitude',
+         latitude = 'latitude'
 )
 
-name_display <- list('Glocery_and_Pharmacy' = 'Glocery/Pharmacy',
+name_display <- list('Grocery_and_Pharmacy' = 'Grocery/Pharmacy',
                   'General_Retail' = 'General Retail',
                    'Art_and_Entertainment' = 'Art/Entertainment',
                    'Restaurant_and_Bar' = 'Restaurant/Bar',
@@ -72,7 +83,7 @@ name_display <- list('Glocery_and_Pharmacy' = 'Glocery/Pharmacy',
                     'Healthcare' = 'Healthcare'
 )
 
-dependent_var_list <- c('Glocery_and_Pharmacy', 'General_Retail', 
+dependent_var_list <- c('Grocery_and_Pharmacy', 'General_Retail', 
                         'Art_and_Entertainment', 'Restaurant_and_Bar',
                         'Education', 'Healthcare')
 
@@ -81,8 +92,20 @@ independent_vars_linear_base = c("temporal_discounting_score","loss_aversion_sco
                                  'stringency_index',"no_health_insurance_rate","no_vehicle_household_rate", "household_income", "percent_people_own_bachelor_degrees", 
                                  "weighted_average_age")
 
-##### plot the full gam model results ######
+#### there are zeros in the raw and if i want to log it, replace an eplison value
+### which is close to the second smallest not too small.
+
+visits_scores_wk <- visits_scores_wk %>%
+  mutate(
+    Grocery_and_Pharmacy = ifelse(Grocery_and_Pharmacy == 0, 0.01, Grocery_and_Pharmacy),
+    Education = ifelse(Education == 0, 0.01, Education),
+    Healthcare = ifelse(Healthcare == 0, 0.01, Healthcare)
+  )
+
+##### run the full gam model results ######
+run_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display, subfolder_n)
 plot_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display, subfolder_n)
+dependence_terms(dependent_var_list, independent_vars_linear_base, visits_scores_wk, subfolder_n)
 
 ###### combine the ALL THE dependence plots ######
 png_files <- paste0("../results/", subfolder_n, dependent_var_list, "_gam_model_plot.png")
@@ -134,5 +157,5 @@ if (length(images) > 0) {
 
 ##### plot only selected zipcodes ####
 
-selected_zips <- list('10025','11234','11375','10304')
+selected_zips <- list('10025','11234','11375','10304','10453')
 plot_zipcodes_for_multiple_vars(visits_scores_wk, selected_zips, dependent_var_list,subfolder_n)

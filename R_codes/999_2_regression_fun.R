@@ -3,18 +3,25 @@ name_mapping_dep, sub_dir) {
     for (dependent_var in dependent_var_list) {
     # Construct the formula
     
-    independent_vars_smooth<- independent_vars_smooth_base
+    independent_vars_smooth <- independent_vars_smooth_base
     independent_vars_linear <- independent_vars_linear_base
     
-    #",k=12)",
-    smooth_parts <- paste("s(", independent_vars_smooth, ",k=6)",collapse = " + ")
+    df_lag <- visits_scores_wk %>%
+    arrange(MODZCTA, week) %>%
+    group_by(MODZCTA) %>%
+    mutate(y_lag1 = log(lag(!!sym(dependent_var), 1)), 
+    y_lag2 = log(lag(!!sym(dependent_var), 2))) %>%
+    ungroup()
+
+
+    smooth_parts <- paste("s(", independent_vars_smooth, ",k=13)",collapse = " + ")
     linear_parts <- paste(independent_vars_linear, collapse = " + ")
-    formula <- as.formula(paste(dependent_var, "~", smooth_parts, "+", linear_parts))
-
+    
+    formula <- as.formula(paste(dependent_var, "~", smooth_parts, "+", linear_parts, "+ y_lag1")) #, "+ y_lag1 + y_lag2"
+    
     # Fit the model
-    gam_model <- gam(formula, data = visits_scores_wk, family = Gamma(link='log'), method = "ML")
+    gam_model <- gam(formula, data = df_lag, family = gaussian(link='log'), method = "ML",na.action = na.exclude)
     #scat(link="log") #gaussian() #Gamma
-
     
     # Capture the model summary
     sum_my_model <- summary(gam_model)
@@ -22,10 +29,8 @@ name_mapping_dep, sub_dir) {
 
     summary_file_name <- paste0("../results/", sub_dir, dependent_var, "_model_summary.txt")
     writeLines(model_summary, summary_file_name)
-        ###save the model 
+    ###save the model 
 
-    #check_file_name <- paste0("../results/", sub_dir, dependent_var, "gam_check_plots.pdf")
-    #pdf(check_file_name, width = 5, height = 4)
     check_file_name <- paste0("../results/", sub_dir, dependent_var, "_gam_check_plots.png")
     png(check_file_name, width = 16, height = 4, units = "in", res = 300)
     par(mfrow = c(1, 4),oma = c(0, 0, 2, 0))
@@ -36,12 +41,15 @@ name_mapping_dep, sub_dir) {
     file_name_model <- paste0("../results/", sub_dir, dependent_var, "_gam_model.RData")
     save(gam_model, file = file_name_model)
    
-    # Prepare for plotting
+    ############# Prepare for plotting ##############
     num_terms <- length(c(independent_vars_smooth, independent_vars_linear))
+
     file_name <- paste0("../results/", sub_dir, dependent_var, "_gam_model_plot.png")
+    # opne the png device
     png(file_name, width = 800, height = num_terms * 400, res = 300)
-    ##### title plot ####
+    # set up the plotting layout, one more for title
     par(mfrow=c(num_terms+1, 1))
+    # placeholder
     dependent_var_displace <- name_mapping_dep[dependent_var]
     title_text <- paste(dependent_var_displace, "\nR-squared:", round(sum_my_model$r.sq, 3))
     # Use the first "plot" as a title
@@ -54,13 +62,16 @@ name_mapping_dep, sub_dir) {
       plot(gam_model, shade = TRUE, shade.col = "gray", select = i, all.terms = TRUE, main = "")
     }
     dev.off()
+    ##################################################
         # Predict and update dataframe
-    predictions <- predict(gam_model, newdata = visits_scores_wk, type = "response")
-    visits_scores_wk$predicted <- predictions
+    predictions <- predict(gam_model, newdata = df_lag, type = "response")
+    df_lag$predicted <- predictions
     
     # Plot true vs predicted
-    df <- visits_scores_wk[, c("week", "predicted", dependent_var, "MODZCTA")]
+    # Remove rows with any NA values by lagging
+    df_lag <- df_lag %>% na.omit()
     
+    df <- df_lag[, c("week", "predicted", dependent_var, "MODZCTA")]
     df_long <- melt(df, id.vars = c("week", "MODZCTA"))
     
     color_mapping <- c(predicted = "red")
@@ -106,7 +117,12 @@ plot_zipcodes_for_multiple_vars <- function(data, selected_zipcodes, dependent_v
     file_name <- paste0("../results/", sub_dir, dependent_var, "_gam_model.RData")
     load(file_name)
   # Generate predictions only once for efficiency
-    predictions <- predict(gam_model, newdata = data, type = "response")
+    df_lag <- data %>%
+    arrange(MODZCTA, week) %>%
+    group_by(MODZCTA) %>%
+    mutate(y_lag1 = lag( {{ dependent_var }}, 1), y_lag2 = lag({{ dependent_var }}, 2)) %>%
+    ungroup()
+    predictions <- predict(gam_model, newdata = df_lag, type = "response")
     data$predicted <- predictions
     # Define color mapping
     color_mapping <- c(predicted = "red")
@@ -119,7 +135,7 @@ plot_zipcodes_for_multiple_vars <- function(data, selected_zipcodes, dependent_v
     # Generate the plot for current dependent variable
     p <- ggplot(df_long, aes(x = week, y = value, color = variable)) +
       geom_line() +
-      facet_wrap(~MODZCTA, scales = "free_y", nrow = 4) +
+      facet_wrap(~MODZCTA, scales = "free_y", nrow = 5) +
       theme_minimal() +
       labs(x = "Week", y = "Visits per 100 populations") +
       scale_color_manual(values = color_mapping) +
@@ -137,5 +153,5 @@ plot_zipcodes_for_multiple_vars <- function(data, selected_zipcodes, dependent_v
   
   # Save the combined plot to a PDF file
   image_name <- paste0("../results/", sub_dir, "combined_true_vs_predicted.png")
-  ggsave(image_name, combined_plot, width = 7, height = 4.5, device = 'png')
+  ggsave(image_name, combined_plot, width = 7, height = 5.5, device = 'png')
 }

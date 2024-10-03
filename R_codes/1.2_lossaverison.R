@@ -21,7 +21,7 @@ dat_lossgain <- dat_lossgain %>%
   mutate(loss_loss_1 = recode(loss_loss_1, "An 80% chance of losing $6,000" = 1, 
                        "A 100% chance of losing $4,500" = 0)) %>%
   mutate(loss_loss_2 = recode(loss_loss_2, "A 20% chance of losing $6,000" = 1, 
-                       "A 25% chance of losing $4,500" = 0)) %>%
+                       "A 25% chance of losing $4,500" = 0)) %>%   
   mutate(loss_loss_3 = recode(loss_loss_3, "A 45% chance of losing $9,000" = 1, 
                        "A 90% chance of losing $4,500" = 0))
 

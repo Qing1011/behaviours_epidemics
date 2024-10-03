@@ -3,8 +3,38 @@ library(ggplot2)
 # Selecting columns to plot
 install.packages("fitdistrplus")
 install.packages("MASS")  # Required for some distributions
+install.packages(c( "lmtest", "broom"))
 library(fitdistrplus)
 library(MASS)
+library(dplyr)
+library(lmtest)
+library(broom)
+install.packages("nlme")
+library(nlme)
+install.packages("gamm4")
+library(gamm4)
+
+##################Residual Test#########################
+# Define the same subdirectory and dependent variable used during saving
+sub_dir <- 'gam_model_1to1'     
+dependent_var_list <- c('Grocery_and_Pharmacy', 'General_Retail', 
+                        'Art_and_Entertainment', 'Restaurant_and_Bar',
+                        'Education', 'Healthcare')
+dependent_var <- dependent_var_list[3]    
+# Reconstruct the file path
+file_name_model <- paste0("../results/", sub_dir, "/", dependent_var, "_gam_model.RData")
+# Load the GAM model
+load(file_name_model)
+residuals <- residuals(gam_model)
+residual_col_name <- paste0("residual_", dependent_var)
+visits_scores_wk_with_r <- visits_scores_wk %>%
+  mutate(!!residual_col_name := residuals(gam_model))
+
+dw_results <- visits_scores_wk_with_r %>%
+  group_by(MODZCTA) %>%                     # Group by location
+  arrange(week) %>%                         # Ensure residuals are ordered by week
+  do(tidy(dwtest(as.formula(paste0(residual_col_name, " ~ 1")), data = .))) %>%  # Apply Durbin-Watson test
+  ungroup() 
 
 
 
@@ -24,10 +54,10 @@ check_distribution <- function(data, colname) {
     cdfcomp(list(fit_normal,  fit_lognormal), legendtext = plot.legend)
 }
 
-#cols_to_plot <- c('Glocery_and_Pharmacy', 'General_Retail', 
+#cols_to_plot <- c('Grocery_and_Pharmacy', 'General_Retail', 
 #                  'Art_and_Entertainment', 'Restaurant_and_Bar',
 #                  'Education', 'Healthcare')
-cols_to_plot <- c('Glocery.Pharmacies_visits_weekly', 'Retails_visits_weekly', 
+cols_to_plot <- c('Grocery.Pharmacies_visits_weekly', 'Retails_visits_weekly', 
                     'Arts.Entertainment_visits_weekly', 'Restaurants.Bars_visits_weekly',
                     'Educations_visits_weekly', 'Healthcares_visits_weekly',
                     'others_visits_weekly')

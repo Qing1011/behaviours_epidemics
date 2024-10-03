@@ -5,12 +5,13 @@ library(data.table)
 
 census_api_key("919b37e63df029d1420900f893770f49d4a03226") #,install = TRUE
 v21 <- load_variables(2021, "acs5", cache = TRUE)
-View(v21)
-write_csv(v21,'../data/variable_namesv21.csv')
+#View(v21)
+#write_csv(v21,'../data/variable_namesv21.csv')
 
 mod_counts <- read.csv('../results/counts/modzcta_zip_counts.csv')
 select_zcta <- mod_counts[mod_counts$modzcta_count > 15, "ZCTA"]
-zcta_ls <- select_zcta[!select_zcta %in% c(10004,10007,10005,10271)]
+zcta_ls <- select_zcta
+#zcta_ls <- select_zcta[!select_zcta %in% c(10004,10007,10005,10271)]
 
 
 ###############**Population**################
@@ -24,7 +25,6 @@ race_group_popu <- c(
   'B01001G_001'
 )
 ls <- length(race_group_popu) + 1
-
 population <- get_acs(geography = "zcta",
                       variables = race_group_popu,
                       year = 2021,
@@ -122,6 +122,8 @@ no_vehicles <- get_acs(geography = "zcta",
 
 ###############**Age**################
 ageunder5_groups <- c(
+  'B01001A_003',
+  'B01001A_018',
   'B01001B_003',
   'B01001B_018',
   'B01001C_003',
@@ -133,12 +135,7 @@ ageunder5_groups <- c(
   'B01001F_003',
   'B01001F_018',
   'B01001G_003',
-  'B01001G_018',
-  'B01001H_003',
-  'B01001H_018',
-  'B01001I_003',
-  'B01001I_018'
-)
+  'B01001G_018')
 ls <- length(ageunder5_groups)+1
 ageunder5 <- get_acs(geography = "zcta",
                     variables = ageunder5_groups,
@@ -155,6 +152,8 @@ ageunder5 <- get_acs(geography = "zcta",
 
 
 age5to9_groups <- c(
+  'B01001A_004',
+  'B01001A_019',
   'B01001B_004',
   'B01001B_019',
   'B01001C_004',
@@ -166,11 +165,7 @@ age5to9_groups <- c(
   'B01001F_004',
   'B01001F_019',
   'B01001G_004',
-  'B01001G_019',
-  'B01001H_004',
-  'B01001H_019',
-  'B01001I_004',
-  'B01001I_019'
+  'B01001G_019'
 )
 ls <- length(age5to9_groups) + 1
 age5to9 <- get_acs(geography = "zcta",
@@ -187,6 +182,8 @@ age5to9 <- get_acs(geography = "zcta",
     select(GEOID, age5to9 = Total_Estimate)
 
 age10to14_groups <- c(
+  'B01001A_005',
+  'B01001A_020',
   'B01001B_005',
   'B01001B_020',
   'B01001C_005',
@@ -198,12 +195,7 @@ age10to14_groups <- c(
   'B01001F_005',
   'B01001F_020',
   'B01001G_005',
-  'B01001G_020',
-  'B01001H_005',
-  'B01001H_020',
-  'B01001I_005',
-  'B01001I_020' 
-)
+  'B01001G_020')
 ls <- length(age10to14_groups) + 1
 age10to14 <- get_acs(geography = "zcta",
                     variables = age10to14_groups,
@@ -219,6 +211,8 @@ age10to14 <- get_acs(geography = "zcta",
     select(GEOID, age10to14 = Total_Estimate)
 
 age15to17_groups <- c(
+  'B01001A_006',
+  'B01001A_021',
   'B01001B_006',
   'B01001B_021',
   'B01001C_006',
@@ -230,11 +224,7 @@ age15to17_groups <- c(
   'B01001F_006',
   'B01001F_021',
   'B01001G_006',
-  'B01001G_021',
-  'B01001H_006',
-  'B01001H_021',
-  'B01001I_006',
-  'B01001I_021')######
+  'B01001G_021')######
 ls <- length(age15to17_groups) + 1
 age15to17 <- get_acs(geography = "zcta",
                     variables = age15to17_groups,
@@ -249,7 +239,9 @@ age15to17 <- get_acs(geography = "zcta",
     mutate(Total_Estimate = rowSums(select(.,2:ls), na.rm = TRUE)) %>%
     select(GEOID, age15to17 = Total_Estimate)
 
-age18and19_groups <- c( 
+age18and19_groups <- c(
+  'B01001A_007',
+  'B01001A_022',
   'B01001B_007',
   'B01001B_022',
   'B01001C_007',
@@ -261,11 +253,7 @@ age18and19_groups <- c(
   'B01001F_007',
   'B01001F_022',
   'B01001G_007',
-  'B01001G_022',
-  'B01001H_007',
-  'B01001H_022',
-  'B01001I_007',
-  'B01001I_022')####
+  'B01001G_022')####
 ls <- length(age18and19_groups) + 1
 age18and19 <- get_acs(geography = "zcta",
                     variables = age18and19_groups,
@@ -281,6 +269,8 @@ age18and19 <- get_acs(geography = "zcta",
     select(GEOID, age18and19 = Total_Estimate)
 
 age20to24_groups <- c(
+  'B01001A_008',
+  'B01001A_023',
   'B01001B_008',
   'B01001B_023',
   'B01001C_008',
@@ -292,11 +282,7 @@ age20to24_groups <- c(
   'B01001F_008',
   'B01001F_023',
   'B01001G_008',
-  'B01001G_023',
-  'B01001H_008',
-  'B01001H_023',
-  'B01001I_008',
-  'B01001I_023') 
+  'B01001G_023') 
 ls <- length(age20to24_groups) + 1
 age20to24 <- get_acs(geography = "zcta",
                     variables = age20to24_groups,
@@ -312,6 +298,8 @@ age20to24 <- get_acs(geography = "zcta",
     select(GEOID, age20to24 = Total_Estimate)
 
 age25to29_groups <- c(
+  'B01001A_009',
+  'B01001A_024',
   'B01001B_009',
   'B01001B_024',
   'B01001C_009',
@@ -323,11 +311,7 @@ age25to29_groups <- c(
   'B01001F_009',
   'B01001F_024',
   'B01001G_009',
-  'B01001G_024',
-  'B01001H_009',
-  'B01001H_024',
-  'B01001I_009',
-  'B01001I_024')
+  'B01001G_024')
 ls <- length(age25to29_groups) + 1
 age25to29 <- get_acs(geography = "zcta",
                     variables = age25to29_groups,
@@ -343,6 +327,8 @@ age25to29 <- get_acs(geography = "zcta",
     select(GEOID, age25to29 = Total_Estimate)
 
 age30to34_groups <- c(
+  'B01001A_010',
+  'B01001A_025',
   'B01001B_010',
   'B01001B_025',
   'B01001C_010',
@@ -354,11 +340,7 @@ age30to34_groups <- c(
   'B01001F_010',
   'B01001F_025',
   'B01001G_010',
-  'B01001G_025',
-  'B01001H_010',
-  'B01001H_025',
-  'B01001I_010',
-  'B01001I_025')
+  'B01001G_025')
 ls <- length(age30to34_groups) + 1
 age30to34 <- get_acs(geography = "zcta",
                     variables = age30to34_groups,
@@ -375,6 +357,8 @@ age30to34 <- get_acs(geography = "zcta",
 
 
 age35to44_groups <- c(
+  'B01001A_011',
+  'B01001A_026',
   'B01001B_011',
   'B01001B_026',
   'B01001C_011',
@@ -386,12 +370,7 @@ age35to44_groups <- c(
   'B01001F_011',
   'B01001F_026',
   'B01001G_011',
-  'B01001G_026',
-  'B01001H_011',
-  'B01001H_026',
-  'B01001I_011',
-  'B01001I_026'
-)
+  'B01001G_026')
 ls <- length(age35to44_groups) + 1
 age35to44 <- get_acs(geography = "zcta",
                     variables = age35to44_groups,
@@ -408,6 +387,8 @@ age35to44 <- get_acs(geography = "zcta",
 
 
 age45to54_groups<-c(
+  'B01001A_012',
+  'B01001A_027',
   'B01001B_012',
   'B01001B_027',
   'B01001C_012',
@@ -419,11 +400,7 @@ age45to54_groups<-c(
   'B01001F_012',
   'B01001F_027',
   'B01001G_012',
-  'B01001G_027',
-  'B01001H_012',
-  'B01001H_027',
-  'B01001I_012',
-  'B01001I_027')
+  'B01001G_027')
 ls <- length(age45to54_groups) + 1
 age45to54 <- get_acs(geography = "zcta",
                     variables = age45to54_groups,
@@ -439,6 +416,8 @@ age45to54 <- get_acs(geography = "zcta",
     select(GEOID, age45to54 = Total_Estimate)
 
 age55to64_groups <- c(
+  'B01001A_013',
+  'B01001A_028',
   'B01001B_013',
   'B01001B_028',
   'B01001C_013',
@@ -450,11 +429,7 @@ age55to64_groups <- c(
   'B01001F_013',
   'B01001F_028',
   'B01001G_013',
-  'B01001G_028',
-  'B01001H_013',
-  'B01001H_028',
-  'B01001I_013',
-  'B01001I_028')
+  'B01001G_028')
 ls <- length(age55to64_groups) + 1
 age55to64 <- get_acs(geography = "zcta",
                     variables = age55to64_groups,
@@ -470,6 +445,8 @@ age55to64 <- get_acs(geography = "zcta",
     select(GEOID, age55to64 = Total_Estimate)
 
 age65to74_groups <- c(
+  'B01001A_014',
+  'B01001A_029',
   'B01001B_014',
   'B01001B_029',
   'B01001C_014',
@@ -481,11 +458,7 @@ age65to74_groups <- c(
   'B01001F_014',
   'B01001F_029',
   'B01001G_014',
-  'B01001G_029',
-  'B01001H_014',
-  'B01001H_029',
-  'B01001I_014',
-  'B01001I_029')
+  'B01001G_029')
 ls <- length(age65to74_groups) + 1
 age65to74 <- get_acs(geography = "zcta",
                     variables = age65to74_groups,
@@ -501,6 +474,8 @@ age65to74 <- get_acs(geography = "zcta",
     select(GEOID, age65to74 = Total_Estimate)
 
 age75to84_groups<-c(
+  'B01001A_015',
+  'B01001A_030',
   'B01001B_015',
   'B01001B_030',
   'B01001C_015',
@@ -512,11 +487,7 @@ age75to84_groups<-c(
   'B01001F_015',
   'B01001F_030',
   'B01001G_015',
-  'B01001G_030',
-  'B01001H_015',
-  'B01001H_030',
-  'B01001I_015',
-  'B01001I_030')
+  'B01001G_030')
 ls <- length(age75to84_groups) + 1
 age75to84 <- get_acs(geography = "zcta",
                     variables = age75to84_groups,
@@ -532,6 +503,8 @@ age75to84 <- get_acs(geography = "zcta",
     select(GEOID, age75to84 = Total_Estimate)
 
 age85plus_groups<-c(
+  'B01001A_016',
+  'B01001A_031',
   'B01001B_016',
   'B01001B_031',
   'B01001C_016',
@@ -543,8 +516,7 @@ age85plus_groups<-c(
   'B01001F_016',
   'B01001F_031',
   'B01001G_016',
-  'B01001G_031'
-)
+  'B01001G_031')
 ls <- length(age85plus_groups) + 1
 age85plus <- get_acs(geography = "zcta",
                     variables = age85plus_groups,
@@ -590,7 +562,7 @@ data_frames <- list(black, hispanic, householdincome, bachelor, householdnum, po
 for (df in data_frames) {
   zipcodedataNY <- merge(zipcodedataNY, df, by = "GEOID")
 }
-fileName = c('../data/tract_data2021.csv')
+fileName = c('../data/raw_soeco/tract_data2021.csv')
 write.csv(zipcodedataNY, file = fileName, row.names=FALSE)
 
 
