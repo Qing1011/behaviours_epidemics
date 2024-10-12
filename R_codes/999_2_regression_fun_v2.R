@@ -1,5 +1,5 @@
 run_gam_models <- function(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, 
-name_mapping_dep, sub_dir) {
+name_mapping_dep, sub_dir, my_k = 10) {
     for (dependent_var in dependent_var_list) {
     # Construct the formula
     
@@ -12,11 +12,12 @@ name_mapping_dep, sub_dir) {
     mutate(log_y_lag1 = log(lag(!!sym(dependent_var), 1)), 
     log_y_lag2 = log(lag(!!sym(dependent_var), 2))) %>%
     ungroup() 
+    df_lag <- df_lag %>% na.omit()
 
-    smooth_parts <- paste("s(", independent_vars_smooth, ",k=10)",collapse = " + ")
+    smooth_parts <- paste("s(", independent_vars_smooth, ",k=",my_k,")",collapse = " + ")
     linear_parts <- paste(independent_vars_linear, collapse = " + ")
     
-    formula <- as.formula(paste(dependent_var, "~", smooth_parts, "+", linear_parts, "+ log_y_lag1")) #, "+ y_lag1 + y_lag2"
+    formula <- as.formula(paste(dependent_var, "~", smooth_parts, "+", linear_parts, "+ log_y_lag1")) #, "+ log_y_lag1"
     
     # Fit the model
     gam_model <- gam(formula, data = df_lag, family = gaussian(link="log"), method = "ML",na.action = na.exclude)
@@ -54,6 +55,46 @@ name_mapping_dep, sub_dir) {
 
     }
 }   
+
+dependence_terms <- function(dependent_var_list,independent_vars_ls, visits_scores_wk, sub_dir) {
+    for (dependent_var in dependent_var_list) {
+        # Read back the models
+        file_name_model <- paste0("../results/", sub_dir, '/', dependent_var, "_gam_model.RData")
+        load(file_name_model)
+        
+        df_lag <- visits_scores_wk %>%
+        arrange(MODZCTA, week) %>%
+        group_by(MODZCTA) %>%
+        mutate(log_y_lag1 = log(lag(!!sym(dependent_var), 1)), 
+        log_y_lag2 = log(lag(!!sym(dependent_var), 2))) %>%
+        ungroup() 
+        df_lag <- df_lag %>% na.omit()
+        
+        predictions <- predict(gam_model, newdata = df_lag, type = "terms", se.fit = TRUE)
+
+        results_list <- list()
+        for (variable_name in independent_vars_ls) {
+            print(variable_name)
+            var_term <- ifelse(variable_name == "week", "s(week)",
+            ifelse(variable_name == "log_borough_case_count", "s(log_borough_case_count)", variable_name))
+
+            x_effect <- predictions$fit[, var_term]
+            x_se <- predictions$se.fit[, var_term]
+            df <- data.frame(
+            x_original = df_lag[[variable_name]],  
+            fit = x_effect,
+            upper = x_effect + 2 * x_se,
+            lower = x_effect - 2 * x_se
+            )
+            results_list[[variable_name]] <- df
+            }
+        # Plotting
+        combined_results <- bind_rows(results_list, .id = "variable")
+
+        file_name <- paste0("../results/", sub_dir, dependent_var, "_linear_term_dependence.csv")
+        write.csv(combined_results, file_name)
+    }
+}
 
 plot_gam_models <- function(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, 
 name_mapping_dep, sub_dir) {
@@ -118,31 +159,3 @@ name_mapping_dep, sub_dir) {
 }   
 
 
-dependence_terms <- function(dependent_var_list,independent_vars_linear_base, visits_scores_wk, sub_dir) {
-    for (dependent_var in dependent_var_list) {
-        # Read back the models
-        file_name_model <- paste0("../results/", sub_dir, dependent_var, "_gam_model.RData")
-        load(file_name_model)
-        
-        predictions <- predict(gam_model, type = "terms", se.fit = TRUE)
-
-        results_list <- list()
-        for (variable_name in independent_vars_linear_base) {
-            print(variable_name)
-            x_effect <- predictions$fit[, variable_name]
-            x_se <- predictions$se.fit[, variable_name]
-            df <- data.frame(
-            x_original = visits_scores_wk[[variable_name]],  
-            fit = x_effect,
-            upper = x_effect + 2 * x_se,
-            lower = x_effect - 2 * x_se
-            )
-            results_list[[variable_name]] <- df
-            }
-        # Plotting
-        combined_results <- bind_rows(results_list, .id = "variable")
-
-        file_name <- paste0("../results/", sub_dir, dependent_var, "_linear_term_dependence.csv")
-        write.csv(combined_results, file_name)
-    }
-}

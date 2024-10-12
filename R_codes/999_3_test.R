@@ -4,14 +4,14 @@ library(ggplot2)
 install.packages("fitdistrplus")
 install.packages("MASS")  # Required for some distributions
 install.packages(c( "lmtest", "broom"))
+install.packages("gamm4")
+install.packages("nlme")
 library(fitdistrplus)
 library(MASS)
 library(dplyr)
 library(lmtest)
 library(broom)
-install.packages("nlme")
 library(nlme)
-install.packages("gamm4")
 library(gamm4)
 
 ##################Residual Test#########################

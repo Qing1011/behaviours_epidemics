@@ -36,10 +36,11 @@ get_summary(independ_data_smooth, "../results/data_description/Summary_temporal_
 
 
 
-##################################
-selected_columns <- visits_scores_wk %>% select(all_of(c(dependent_var_list,
-                                                         independent_vars_linear_base,
-                                                         'log_borough_case_count')))
+##############################
+library(dplyr)
+selected_columns <- visits_scores_wk %>%
+  dplyr::select(all_of(c(dependent_var_list, independent_vars_linear_base, 'log_borough_case_count')))
+
 correlation_matrix <- cor(selected_columns)
 p.mat <- cor_pmat(selected_columns)
 corr_plot <- ggcorrplot(correlation_matrix, 

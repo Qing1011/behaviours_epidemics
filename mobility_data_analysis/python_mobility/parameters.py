@@ -7,7 +7,10 @@ years = ['2018', '2019', '2020', '2021', '2022']
 months = ['01', '02', '03', '04', '05',
           '06', '07', '08', '09', '10', '11', '12']
 
-cluster_name = {0: 'Grocery&Pharmacies', 1: 'Retails', 2: 'Arts&Entertainment', 3: 'Restaurants&Bars',
+cluster_name = {0: 'Grocery stores and pharmacies', 1: 'General retail', 2: 'Arts and entertainment venues', 3: 'Restaurants and bars',
+                4: 'Educational settings', 5: 'Healthcare facilities', 6: 'others'}
+
+cluster_name0 = {0: 'Grocery&Pharmacies', 1: 'Retails', 2: 'Arts&Entertainment', 3: 'Restaurants&Bars',
                 4: 'Educations', 5: 'Healthcares', 6: 'others'}
 # 医疗的流动可视化表现好像不是很好 没有呈现出去大医院的趋势，然后密度好像也不高
 # 0和1没有表现出太大的区别，好像1还有点什么问题来着，后来干脆就和在一起了

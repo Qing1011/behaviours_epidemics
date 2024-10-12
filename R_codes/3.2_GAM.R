@@ -24,7 +24,7 @@ source('999_2_regression_fun_v2.R')
 
 ##### if have run summary please, skip this part #####
 visits_scores_wk <- read.csv('../data/unpivot_merged_data_raw_1to1_s.csv')
-subfolder_n <- c('/gam_model_1to1/') #loss_visitors
+subfolder_n <- c('/gam_model_1to1/') #1to1 loss_visitors 1tomore
 #visits_scores_wk <- read.csv(file.choose())
 
 
@@ -87,7 +87,7 @@ dependent_var_list <- c('Grocery_and_Pharmacy', 'General_Retail',
                         'Art_and_Entertainment', 'Restaurant_and_Bar',
                         'Education', 'Healthcare')
 
-independent_vars_smooth_base = c("week","log_borough_case_count")  #,'DEATH_COUNT_log' "borough_case_count"
+independent_vars_smooth_base = c("week", "log_borough_case_count")  #,'DEATH_COUNT_log' "borough_case_count"
 independent_vars_linear_base = c("temporal_discounting_score","loss_aversion_score",'agency_score', 
                                  'stringency_index',"no_health_insurance_rate","no_vehicle_household_rate", "household_income", "percent_people_own_bachelor_degrees", 
                                  "weighted_average_age")
@@ -103,10 +103,12 @@ visits_scores_wk <- visits_scores_wk %>%
   )
 
 ##### run the full gam model results ######
-run_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display, subfolder_n)
-plot_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display, subfolder_n)
-dependence_terms(dependent_var_list, independent_vars_linear_base, visits_scores_wk, subfolder_n)
+run_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display, subfolder_n, my_k=10)
 
+independent_vars <- c(independent_vars_smooth_base, independent_vars_linear_base,"log_y_lag1")
+dependence_terms(dependent_var_list, independent_vars, visits_scores_wk, subfolder_n)
+
+plot_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display, subfolder_n)
 ###### combine the ALL THE dependence plots ######
 png_files <- paste0("../results/", subfolder_n, dependent_var_list, "_gam_model_plot.png")
 images <- list()
