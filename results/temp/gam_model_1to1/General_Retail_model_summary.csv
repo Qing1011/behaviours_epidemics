@@ -1,0 +1,11 @@
+Parameter,Estimate,Std. Error,t value,Pr(>|t|)
+(Intercept),0.3803,0.2621,1.451,0.14725
+temporal_discounting_score,0.01203,0.002256,5.33,1.28e-07 ***
+loss_aversion_score,0.005414,0.001047,5.172,2.92e-07 ***
+agency_score,-0.003713,0.00132,-2.812,0.00504 **
+stringency_index,-0.006888,0.002095,-3.288,0.00105 **
+no_health_insurance_rate,0.4022,0.2568,1.566,0.11776
+no_vehicle_household_rate,-0.4358,0.04342,-10.038,< 2e-16 ***
+household_income,-7.345e-07,2.589e-07,-2.837,0.00468 **
+weighted_average_age,-0.002969,0.002465,-1.205,0.22865
+log_y_lag1,0.7256,0.02237,32.432,< 2e-16 ***

@@ -14,7 +14,7 @@ library(dplyr)
 ########################
 # 1. Data cleaning
 ########################
-dat <- read_csv("../data/RAISE+Base+Survey_January+24,+2024_13.50.csv") #load in the data
+dat <- read_csv("../data/raw_survey/RAISE+Base+Survey_January+24,+2024_13.50.csv") #load in the data
 dat <- dat[-c(1,2), -c(1:3, 9:12, 94:101) ] #remove the first two rows and several unneeded columns
 
 #initial data quality checks
@@ -309,5 +309,5 @@ dat_unique <- dat_item %>%
 
 rm(q, scores, presbias, absolmag, gainloss)
 
-write_csv(dat_item, "../results/1_3_dat_unique_item.csv")
-
+write_csv(dat_item, "../results/scores/1_3_dat_unique_item.csv")
+write_csv(dat, "../data/raw_survey/processed.csv")

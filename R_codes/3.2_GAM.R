@@ -89,8 +89,10 @@ dependent_var_list <- c('Grocery_and_Pharmacy', 'General_Retail',
 
 independent_vars_smooth_base = c("week", "log_borough_case_count")  #,'DEATH_COUNT_log' "borough_case_count"
 independent_vars_linear_base = c("temporal_discounting_score","loss_aversion_score",'agency_score', 
-                                 'stringency_index',"no_health_insurance_rate","no_vehicle_household_rate", "household_income", "percent_people_own_bachelor_degrees", 
+                                 'stringency_index',"no_health_insurance_rate","no_vehicle_household_rate", "household_income", 
                                  "weighted_average_age")
+
+#"percent_people_own_bachelor_degrees", 
 
 #### there are zeros in the raw and if i want to log it, replace an eplison value
 ### which is close to the second smallest not too small.
@@ -106,6 +108,7 @@ visits_scores_wk <- visits_scores_wk %>%
 run_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display, subfolder_n, my_k=10)
 
 independent_vars <- c(independent_vars_smooth_base, independent_vars_linear_base,"log_y_lag1")
+
 dependence_terms(dependent_var_list, independent_vars, visits_scores_wk, subfolder_n)
 
 plot_gam_models(dependent_var_list, independent_vars_smooth_base, independent_vars_linear_base, visits_scores_wk, name_display, subfolder_n)

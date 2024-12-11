@@ -12,8 +12,7 @@ mod_counts <- read.csv('../results/counts/modzcta_zip_counts.csv')
 select_zcta <- mod_counts[mod_counts$modzcta_count > 15, "ZCTA"]
 zcta_ls <- select_zcta
 #zcta_ls <- select_zcta[!select_zcta %in% c(10004,10007,10005,10271)]
-
-
+#zcta_ls <- mod_counts$ZCTA
 ###############**Population**################
 race_group_popu <- c(
   'B01001A_001',
