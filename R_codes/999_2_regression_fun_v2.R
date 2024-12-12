@@ -101,26 +101,31 @@ name_mapping_dep, sub_dir) {
 
     for (dependent_var in dependent_var_list) {
         # Construct the formula (this part seems to be incomplete, add as needed)
-        # Read back the models
-        file_name_model <- paste0("../results/", sub_dir, dependent_var, "_gam_model.RData")
-        load(file_name_model)
         # Plotting
+        
         df_lag <- visits_scores_wk %>%
             arrange(MODZCTA, week) %>%
             group_by(MODZCTA) %>%
             mutate(log_y_lag1 = log(lag(!!sym(dependent_var), 1)), 
             log_y_lag2 = log(lag(!!sym(dependent_var), 2))) %>%
             ungroup() 
+        
         df_lag <- df_lag %>% na.omit()
-        num_terms <- length(c(independent_vars_smooth, independent_vars_linear))+ 1
+        # Read back the models
+        file_name_model <- paste0("../results/", sub_dir, dependent_var, "_gam_model.RData")
+        load(file_name_model)
+        num_terms <- length(c(independent_vars_smooth_base, independent_vars_linear_base))+ 1
         file_name <- paste0("../results/", sub_dir, dependent_var, "_gam_model_plot.png")
         # opne the png device
+        
         png(file_name, width = 800, height = num_terms * 400, res = 300)
         # set up the plotting layout, one more for title
         par(mfrow=c(num_terms+1, 1))
         # placeholder
         dependent_var_displace <- name_mapping_dep[dependent_var]
+        predict(gam_model, newdata = df_lag)
         sum_my_model <- summary(gam_model)
+        
         title_text <- paste(dependent_var_displace, "\nR-squared:", round(sum_my_model$r.sq, 3))
     # Use the first "plot" as a title
         par(mar=c(0, 0, 4, 0))
@@ -128,10 +133,12 @@ name_mapping_dep, sub_dir) {
         title(main = title_text, cex.main = 1)  # Add the title
         #### each term plot ####
         par(mar=c(4, 2, 1, 2))
+        print(ls(environment()))
         for(i in 1:num_terms) {
             plot(gam_model, shade = TRUE, shade.col = "gray", select = i, all.terms = TRUE, main = "")
             }
         dev.off()
+        
     ##################################################
         # Predict and update dataframe
         predictions <- predict(gam_model, newdata = df_lag, type = "response")

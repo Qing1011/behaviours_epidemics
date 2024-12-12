@@ -53,7 +53,7 @@ The policy stringency data is avaliable in the Oxford COVID-19 Government Respon
 
 Use python script/notebooks can merge the data.
 
-## 6. Random Forest Model
-We use random forest model with permutation importance to evaluate the variable/feature importance of the variables we select. The model is in the 4.1_random_forest.R file.
+<!-- ## 6. Random Forest Model
+We use random forest model with permutation importance to evaluate the variable/feature importance of the variables we select. The model is in the 4.1_random_forest.R file. -->
 
  
